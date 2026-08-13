@@ -8,7 +8,6 @@ const { put } = require('@vercel/blob');
 
 const app = express();
 
-const app = express();
 
 app.get("/api/test", (req, res) => {
     res.status(200).json({
