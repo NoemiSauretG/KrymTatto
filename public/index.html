@@ -13,203 +13,638 @@
     <link rel="stylesheet" href="style.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
         href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <script src="script.js"></script>
+    <!-- JavaScript -->
+    <script src="script.js" defer></script>
 
 </head>
 
 <body>
 
-    <!-- NAVBAR -->
+    <!-- ============================================================
+         NAVBAR
+    ============================================================ -->
+
     <header class="navbar">
+
         <div class="nav">
+
             <input type="checkbox" id="menu-toggle">
-            <label for="menu-toggle" class="menu-icon">☰</label>
-            
-            <div class="logo"><img src="./img/logo.png"></div>
+
+            <label for="menu-toggle" class="menu-icon">
+                ☰
+            </label>
+
+            <div class="logo">
+                <img src="./img/logo.png" alt="Krym Tattoo">
+            </div>
 
             <nav class="menu">
+
                 <ul>
-                    <li><a class="nav-link active" onclick="navegarA('inicio')">Inicio</a></li>
-                    <li><a class="nav-link" onclick="navegarA('portfolio')">Portafolio</a></li>
-                    <li><a class="nav-link" onclick="navegarA('ofertas')">Ofertas</a></li>
-                    <li><a class="nav-link" onclick="navegarA('faq')">FAQ</a></li>
-                    <li><a class="nav-link" onclick="navegarA('contacto')">Contacto</a></li>
+
+                    <li>
+                        <a
+                            class="nav-link active"
+                            onclick="navegarA('inicio')">
+                            Inicio
+                        </a>
+                    </li>
+
+                    <li>
+                        <a
+                            class="nav-link"
+                            onclick="navegarA('portfolio')">
+                            Portafolio
+                        </a>
+                    </li>
+
+                    <li>
+                        <a
+                            class="nav-link"
+                            onclick="navegarA('ofertas')">
+                            Ofertas
+                        </a>
+                    </li>
+
+                    <li>
+                        <a
+                            class="nav-link"
+                            onclick="navegarA('faq')">
+                            FAQ
+                        </a>
+                    </li>
+
+                    <li>
+                        <a
+                            class="nav-link"
+                            onclick="navegarA('contacto')">
+                            Contacto
+                        </a>
+                    </li>
+
                 </ul>
+
             </nav>
 
             <div class="nav-right-buttons">
-                <a class="btn-principal" style="padding: 8px 18px; font-size: 0.7rem;" onclick="navegarA('contacto')">Cita</a>
+
+                <a
+                    class="btn-principal"
+                    style="padding: 8px 18px; font-size: 0.7rem;"
+                    onclick="navegarA('contacto')">
+                    Cita
+                </a>
+
             </div>
+
         </div>
+
     </header>
 
-    <!-- 1. INICIO -->
+
+    <!-- ============================================================
+         1. INICIO
+    ============================================================ -->
+
     <section id="inicio" class="active-section">
+
         <div class="quien-soy-block">
+
             <div class="quien-soy-texto">
+
                 <h1>¿Quién soy?</h1>
-                <p>Especialista en micro-realismo, blackwork y linea fina. </p>
-            </div>
-            <!-- Foto remota estable de Unsplash -->
-            <div class="quien-soy-foto"><img src="./img/gian.jpeg" alt="Krym Artista"></div>
-        </div>
-        <div class="carousel-wrapper">
-            <button class="carousel-btn prev-btn">&#10094;</button>
-            <div class="carousel-container" id="carouselContainer">
-                <!-- Se rellena automáticamente desde la base de datos -->
-                <div class="carousel-track" id="carouselTrack"></div>
-            </div>
-            <button class="carousel-btn next-btn">&#10095;</button>
-        </div>
-    </section>
 
-    <!-- 2. PORTAFOLIO -->
-    <section id="portfolio">
-        <div class="section-header-admin">
-            <h2 class="section-title">Portafolio</h2>
-        </div>
-        
-        <!-- Este contenedor ahora se llenará dinámicamente desde JavaScript -->
-        <div class="filter-container" id="filterContainer">
-            <button class="filter-btn active" onclick="filtrarEstilo('all', this)">Todos</button>
-        </div>
-        
-        <div class="portfolio-grid" id="portfolioGrid"></div>
-    </section>
-
-    <!-- 3. OFERTAS -->
-    <section id="ofertas">
-        <div class="section-header-admin">
-            <h2 class="section-title">Flashes y Ofertas</h2>
-        </div>
-        <div class="ofertas-container" id="ofertasContainer">
-            <div class="flash-card">
-                <img src="https://images.unsplash.com/photo-1590246814883-57a511fbc9f3?w=500&auto=format&fit=crop&q=80" class="flash-img">
-                <div class="flash-info">
-                    <span class="flash-tag">Disponible</span>
-                    <h3 class="flash-title">Cráneo Realista</h3>
-                    <div class="flash-price">120€</div>
-                    <button class="btn-principal" onclick="navegarA('contacto')">Reservar</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 4. FAQ -->
-    <section id="faq">
-        <div class="section-header-admin">
-            <h2 class="section-title">Preguntas Frecuentes</h2>
-        </div>
-        <input type="text" id="faqSearch" class="faq-search" placeholder="Buscar dudas..." oninput="buscarPreguntas()">
-        <div class="faq-list" id="faqList">
-            <div class="faq-item">
-                <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">¿Cómo cuido mi tatuaje? <span>+</span></div>
-                <div class="faq-answer">Lávalo con jabón neutro y aplica crema regeneradora 3 veces al día.</div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 5. CONTACTO Y CALENDARIO -->
-    <section id="contacto">
-        <div class="section-header-admin">
-            <h2 class="section-title">Citas e Información</h2>
-        </div>
-        <div class="contacto-wrapper">
-            <!-- Columna Izquierda: Calendario -->
-            <div>
-                <p style="margin-bottom: 15px; color:#888; font-family:sans-serif; font-size:0.9rem;">
-                    Selecciona una fecha disponible en el calendario para tu sesión:
+                <p>
+                    Especialista en micro-realismo, blackwork y línea fina.
                 </p>
-                <div class="calendar-box">
-                    <div class="calendar-header">
-                        <button class="btn-secundario" style="padding:5px 15px;" onclick="cambiarMes(-1)">◀</button>
-                        <h3 id="calendarMonthTitle" style="font-size:1rem; font-weight:400; letter-spacing:1px;">Julio 2026</h3>
-                        <button class="btn-secundario" style="padding:5px 15px;" onclick="cambiarMes(1)">▶</button>
-                    </div>
-                    <div class="calendar-grid" id="calendarGrid"></div>
-                </div>
+
             </div>
 
-            <!-- Columna Derecha: Formulario Correo -->
-            <form id="appointmentForm" onsubmit="enviarCorreoCita(event)">
-                <input type="hidden" id="selectedDateInput" required>
-                <div class="form-group">
-                    <label>Nombre Completo</label>
-                    <input type="text" id="formName" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Tu Correo Electrónico</label>
-                    <input type="email" id="formEmail" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label>Imagen ejemplo</label>
-                    <input type="file" id="formFile" accept="image/*" class="form-control" placeholder="Selecciona una imagen..." readonly style="color:#d4b58a;">
-                </div>
-                <div class="form-group">
-                    <label>Idea del Diseño</label>
-                    <textarea id="formIdea" class="form-control" required></textarea>
-                </div>
-                <button type="submit" class="btn-principal" style="width:100%;">Enviar Solicitud de Reserva</button>
-            </form>
+            <div class="quien-soy-foto">
+
+                <img
+                    src="./img/gian.jpeg"
+                    alt="Krym Artista">
+
+            </div>
+
         </div>
+
+
+        <div class="carousel-wrapper">
+
+            <button
+                class="carousel-btn prev-btn">
+                &#10094;
+            </button>
+
+            <div
+                class="carousel-container"
+                id="carouselContainer">
+
+                <div
+                    class="carousel-track"
+                    id="carouselTrack">
+                </div>
+
+            </div>
+
+            <button
+                class="carousel-btn next-btn">
+                &#10095;
+            </button>
+
+        </div>
+
     </section>
-    <!-- --------------------------------------------------------------------------
-    FOOTER (PIE DE PÁGINA)
-    -------------------------------------------------------------------------- -->
-    <footer class="main-footer">
-        <!-- Contenedor principal de las 3 columnas -->
-        <div class="footer-content">
-            
-            <!-- Columna 1: Info -->
-            <div class="footer-column">
-                <div class="logo"><img src="./img/logo_footer.png"></div>
-                <p class="footer-description">Arte e identidad plasmados en tu piel...</p>
-            </div>
 
-            <!-- Columna 2: Navegación -->
-            <div class="footer-column">
-                <h4>Navegación</h4>
-                <ul class="footer-links">
-                    <li><a href="#" onclick="navegarA('inicio'); return false;">Inicio</a></li>
-                    <li><a href="#" onclick="navegarA('portfolio'); return false;">Portafolio</a></li>
-                    <li><a href="#" onclick="navegarA('contacto'); return false;">Pedir Cita</a></li>
-                </ul>
-            </div>
 
-            <!-- Columna 3: Contacto -->
-            <div class="footer-column">
-                <h4>Contacto</h4>
-                <ul class="footer-contact-list">
-                    <li><a href="https://instagram.com/krymgian" target="_blank"><i class="fab fa-instagram icon-gold"></i> @krymgian</a></li>
-                    <li><a href="https://wa.me/34611679860" target="_blank"><i class="fab fa-whatsapp icon-gold"></i> +34 611 67 98 60</a></li>
-                    <li><a href="mailto:herorean5@gmail.com"><i class="far fa-envelope icon-gold"></i> herorean5@gmail.com</a></li>
-                </ul>
-            </div>
+    <!-- ============================================================
+         2. PORTAFOLIO
+    ============================================================ -->
 
-        </div> <!-- ¡AQUÍ CIERRA EL CONTENEDOR DE COLUMNAS! -->
+    <section id="portfolio">
 
-        <!-- Barra final independiente con fondo negro puro (Fuera de las columnas) -->
-        <div class="footer-bottom-bar">
-            <div class="footer-bottom-container">
-                <p class="copyright-text">&copy; 2026 Krym Tattoo. Todos los derechos reservados.</p>
-            </div>
+        <div class="section-header-admin">
+
+            <h2 class="section-title">
+                Portafolio
+            </h2>
+
         </div>
+
+
+        <div
+            class="filter-container"
+            id="filterContainer">
+
+            <button
+                class="filter-btn active"
+                onclick="filtrarEstilo('all', this)">
+                Todos
+            </button>
+
+        </div>
+
+
+        <div
+            class="portfolio-grid"
+            id="portfolioGrid">
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         3. OFERTAS
+    ============================================================ -->
+
+    <section id="ofertas">
+
+        <div class="section-header-admin">
+
+            <h2 class="section-title">
+                Flashes y Ofertas
+            </h2>
+
+        </div>
+
+
+        <div
+            class="ofertas-container"
+            id="ofertasContainer">
+
+            <!-- Las ofertas se cargan desde Railway -->
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         4. FAQ
+    ============================================================ -->
+
+    <section id="faq">
+
+        <div class="section-header-admin">
+
+            <h2 class="section-title">
+                Preguntas Frecuentes
+            </h2>
+
+        </div>
+
+
+        <input
+            type="text"
+            id="faqSearch"
+            class="faq-search"
+            placeholder="Buscar dudas..."
+            oninput="buscarPreguntas()">
+
+
+        <div
+            class="faq-list"
+            id="faqList">
+
+            <p>
+                Cargando preguntas...
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         5. CONTACTO Y CALENDARIO
+    ============================================================ -->
+
+    <section id="contacto">
+
+        <div class="section-header-admin">
+
+            <h2 class="section-title">
+                Citas e Información
+            </h2>
+
+        </div>
+
+
+        <div class="contacto-wrapper">
+
+
+            <!-- CALENDARIO -->
+
+            <div>
+
+                <p
+                    style="
+                        margin-bottom: 15px;
+                        color:#888;
+                        font-family:sans-serif;
+                        font-size:0.9rem;
+                    ">
+
+                    Selecciona una fecha disponible
+                    en el calendario para tu sesión:
+
+                </p>
+
+
+                <div class="calendar-box">
+
+                    <div class="calendar-header">
+
+                        <button
+                            class="btn-secundario"
+                            style="padding:5px 15px;"
+                            onclick="cambiarMes(-1)">
+
+                            ◀
+
+                        </button>
+
+
+                        <h3
+                            id="calendarMonthTitle"
+                            style="
+                                font-size:1rem;
+                                font-weight:400;
+                                letter-spacing:1px;
+                            ">
+
+                            Julio 2026
+
+                        </h3>
+
+
+                        <button
+                            class="btn-secundario"
+                            style="padding:5px 15px;"
+                            onclick="cambiarMes(1)">
+
+                            ▶
+
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        class="calendar-grid"
+                        id="calendarGrid">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- FORMULARIO -->
+
+            <form
+                id="appointmentForm"
+                onsubmit="enviarCorreoCita(event)">
+
+                <input
+                    type="hidden"
+                    id="selectedDateInput"
+                    required>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Nombre Completo
+                    </label>
+
+                    <input
+                        type="text"
+                        id="formName"
+                        class="form-control"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Tu Correo Electrónico
+                    </label>
+
+                    <input
+                        type="email"
+                        id="formEmail"
+                        class="form-control"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Imagen ejemplo
+                    </label>
+
+                    <input
+                        type="file"
+                        id="formFoto"
+                        name="imagen"
+                        accept="image/*"
+                        class="form-control"
+                        style="color:#d4b58a;">
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label>
+                        Idea del Diseño
+                    </label>
+
+                    <textarea
+                        id="formIdea"
+                        class="form-control"
+                        required>
+                    </textarea>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="btn-principal"
+                    style="width:100%;">
+
+                    Enviar Solicitud de Reserva
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         FOOTER
+    ============================================================ -->
+
+    <footer class="main-footer">
+
+        <div class="footer-content">
+
+
+            <!-- INFO -->
+
+            <div class="footer-column">
+
+                <div class="logo">
+
+                    <img
+                        src="./img/logo_footer.png"
+                        alt="Krym Tattoo">
+
+                </div>
+
+                <p class="footer-description">
+
+                    Arte e identidad plasmados en tu piel...
+
+                </p>
+
+            </div>
+
+
+            <!-- NAVEGACIÓN -->
+
+            <div class="footer-column">
+
+                <h4>
+                    Navegación
+                </h4>
+
+                <ul class="footer-links">
+
+                    <li>
+
+                        <a
+                            href="#"
+                            onclick="
+                                navegarA('inicio');
+                                return false;
+                            ">
+
+                            Inicio
+
+                        </a>
+
+                    </li>
+
+
+                    <li>
+
+                        <a
+                            href="#"
+                            onclick="
+                                navegarA('portfolio');
+                                return false;
+                            ">
+
+                            Portafolio
+
+                        </a>
+
+                    </li>
+
+
+                    <li>
+
+                        <a
+                            href="#"
+                            onclick="
+                                navegarA('contacto');
+                                return false;
+                            ">
+
+                            Pedir Cita
+
+                        </a>
+
+                    </li>
+
+                </ul>
+
+            </div>
+
+
+            <!-- CONTACTO -->
+
+            <div class="footer-column">
+
+                <h4>
+                    Contacto
+                </h4>
+
+                <ul class="footer-contact-list">
+
+                    <li>
+
+                        <a
+                            href="https://instagram.com/krymgian"
+                            target="_blank">
+
+                            <i
+                                class="fab fa-instagram icon-gold">
+                            </i>
+
+                            @krymgian
+
+                        </a>
+
+                    </li>
+
+
+                    <li>
+
+                        <a
+                            href="https://wa.me/34611679860"
+                            target="_blank">
+
+                            <i
+                                class="fab fa-whatsapp icon-gold">
+                            </i>
+
+                            +34 611 67 98 60
+
+                        </a>
+
+                    </li>
+
+
+                    <li>
+
+                        <a
+                            href="mailto:herorean5@gmail.com">
+
+                            <i
+                                class="far fa-envelope icon-gold">
+                            </i>
+
+                            herorean5@gmail.com
+
+                        </a>
+
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+
+        <!-- BARRA INFERIOR -->
+
+        <div class="footer-bottom-bar">
+
+            <div class="footer-bottom-container">
+
+                <p class="copyright-text">
+
+                    &copy; 2026 Krym Tattoo.
+                    Todos los derechos reservados.
+
+                </p>
+
+            </div>
+
+        </div>
+
     </footer>
-    
-    <!-- Lightbox para ampliar imágenes -->
-    <div id="lightbox" class="lightbox">
-        <span class="lightbox-close">&times;</span>
-        <img class="lightbox-content" id="lightboxImg" src="" alt="Tatuaje ampliado">
+
+
+    <!-- ============================================================
+         LIGHTBOX
+    ============================================================ -->
+
+    <div
+        id="lightbox"
+        class="lightbox">
+
+        <span
+            class="lightbox-close">
+
+            &times;
+
+        </span>
+
+
+        <img
+            class="lightbox-content"
+            id="lightboxImg"
+            src=""
+            alt="Tatuaje ampliado">
+
     </div>
+
+
 </body>
+
 </html>
