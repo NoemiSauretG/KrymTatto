@@ -9,24 +9,11 @@ const { put, del } = require("@vercel/blob");
 
 const app = express();
 
-app.get("/api/test-db", async (req, res) => {
-    try {
-        const [rows] = await db.query("SELECT 1 AS conectado");
-
-        res.json({
-            ok: true,
-            railway: true,
-            resultado: rows
-        });
-    } catch (err) {
-        console.error("ERROR MYSQL:", err);
-
-        res.status(500).json({
-            ok: false,
-            railway: false,
-            error: err.message
-        });
-    }
+app.get("/api/test", (req, res) => {
+    res.status(200).json({
+        ok: true,
+        mensaje: "ESTOY EN EL ÚLTIMO DEPLOYMENT"
+    });
 });
 
 app.use(cors());
