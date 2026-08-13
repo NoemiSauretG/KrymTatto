@@ -114,12 +114,89 @@ body {
         .flash-title { font-size: 1.2rem; margin-bottom: 8px; font-weight: 400; }
         .flash-price { font-size: 1.3rem; color: #fff; margin-bottom: 15px; }
 
-        /* FAQ */
-        .faq-search { width: 100%; max-width: 500px; background: #0a0a0a; border: 1px solid #222; padding: 12px 20px; color: #fff; margin-bottom: 40px; outline: none; }
-        .faq-item { border-bottom: 1px solid #111; padding: 25px 0; }
-        .faq-question { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 1.05rem; }
-        .faq-answer { max-height: 0; overflow: hidden; color: #888; font-size: 0.95rem; font-family: sans-serif; line-height: 1.7; transition: 0.3s ease; }
-        .faq-item.open .faq-answer { max-height: 200px; margin-top: 15px; }
+        /* ==========================================================================
+        SECCIÓN FAQ / PREGUNTAS FRECUENTES 
+        ========================================================================== */
+
+        /* Buscador de FAQs */
+        .faq-search {
+            width: 100%;
+            max-width: 500px;
+            background: #0a0a0a;
+            border: 1px solid #222;
+            padding: 12px 20px;
+            color: #fff;
+            margin: 0 auto 40px auto;
+            display: block;
+            outline: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            border-radius: 4px;
+            transition: border-color 0.3s ease;
+        }
+
+        .faq-search:focus {
+            border-color: #d4b58a;
+        }
+
+        /* Ítem individual */
+        .faq-item {
+            border-bottom: 1px solid #111;
+            padding: 20px 0;
+            transition: border-color 0.3s ease;
+        }
+
+        /* Pregunta (Cabecera interactiva) */
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+            color: #d4b58a;
+            user-select: none;
+            transition: color 0.3s ease;
+        }
+
+        .faq-question:hover {
+            color: #fff;
+        }
+
+        /* Indicador (+/-) */
+        .faq-question span {
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+
+        /* Transición animada para la respuesta */
+        .faq-answer {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease, margin-top 0.3s ease, padding 0.3s ease;
+            overflow: hidden;
+            color: #888;
+            font-size: 0.95rem;
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.7;
+            white-space: pre-line; /* Mantiene párrafos y saltos de línea de la BD */
+        }
+
+        /* Estado Abierto (Open) */
+        .faq-item.open .faq-question {
+            color: #fff;
+        }
+
+        .faq-item.open .faq-question span {
+            transform: rotate(45deg); /* Modifica el '+' a 'x' */
+        }
+
+        .faq-item.open .faq-answer {
+            display: block; /* Mantiene la visibilidad del bloque al abrir */
+            margin-top: 15px;
+            color: #ccc;
+        }
 
         /* ==========================================================================
            CALENDARIO DE CITAS / FESTIVOS
