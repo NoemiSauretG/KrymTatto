@@ -6,14 +6,12 @@ try {
 /* --------------------------------------------------------------------------
     LOGIN / LOGOUT GLOBAL (Sincronizado con API Backend)
     -------------------------------------------------------------------------- */
-const IS_ADMIN_PAGE = /(^|\/)admin\.html$/i.test(window.location.pathname);
-let adminToken = sessionStorage.getItem('adminToken') || '';
-let isLogged = IS_ADMIN_PAGE && !!adminToken;
+let isLogged = localStorage.getItem('adminKrym') === 'true';
 
 // Añadir cargador de eventos iniciales seguro
 document.addEventListener('DOMContentLoaded', () => {
     actualizarBotonNav();
-    if(IS_ADMIN_PAGE && isLogged) document.body.classList.add('admin-mode');
+    if(isLogged) document.body.classList.add('admin-mode');
     
     // Escuchador dinámico para el formulario del portfolio (evita error tipo MIME / ?imagen=...)
     const formPortfolio = document.getElementById('form-portfolio');
@@ -25,40 +23,40 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function controlLoginGlobal() {
-    if (!IS_ADMIN_PAGE) return;
-
-    if (isLogged) {
-        sessionStorage.removeItem('adminToken');
-        adminToken = '';
+    if(isLogged) {
+        localStorage.removeItem('adminKrym');
         isLogged = false;
         document.body.classList.remove('admin-mode');
-        actualizarBotonNav();
-        window.location.reload();
-        return;
-    }
-
-    const p = prompt('Introduce la clave de acceso de administrador:');
-    if (!p) return;
-
-    fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: p })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success && data.token) {
-            sessionStorage.setItem('adminToken', data.token);
-            adminToken = data.token;
-            isLogged = true;
-            document.body.classList.add('admin-mode');
-            actualizarBotonNav();
-            window.location.reload();
-        } else {
-            alert('Clave incorrecta.');
+        if(document.getElementById('adminHollidayHelper')) {
+            document.getElementById('adminHollidayHelper').style.display = 'none';
         }
-    })
-    .catch(() => alert('Error al intentar conectar con el servidor de autenticación.'));
+        actualizarBotonNav();
+        alert('Sesión de administrador cerrada.');
+        window.location.reload();
+    } else {
+        let p = prompt('Introduce la clave de acceso de administrador:');
+        if(!p) return;
+
+        // Petición real al servidor para verificar credenciales
+        fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: p })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                localStorage.setItem('adminKrym', 'true');
+                isLogged = true;
+                document.body.classList.add('admin-mode');
+                actualizarBotonNav();
+                alert('¡Acceso concedido! Las opciones de edición han sido desbloqueadas.');
+            } else {
+                alert('Clave incorrecta.');
+            }
+        })
+        .catch(() => alert('Error al intentar conectar con el servidor de autenticación.'));
+    }
 }
 
 function actualizarBotonNav() {
@@ -101,49 +99,10 @@ function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 /* --------------------------------------------------------------------------
     ENVÍO DE DATOS AL BACKEND (MYSQL) Y RENDERIZADOS
     -------------------------------------------------------------------------- */
-function appendFotoHtml(item) {
-    const grid = document.getElementById('portfolioGrid');
-    if (!grid) return;
-    const card = document.createElement('div');
-    card.className = 'portfolio-card admin-draggable';
-    card.dataset.id = item.id;
-    card.dataset.category = item.estilo || '';
-    card.draggable = isLogged;
-    const cleanSrc = (item.imagen || '').replace(/\\/g, '/');
-    const imageUrl = cleanSrc.startsWith('http') ? cleanSrc : `/${cleanSrc}`;
-    card.innerHTML = `<img src="${imageUrl}" alt="Trabajo de ${item.estilo || 'tatuaje'}">
-        <div class="admin-card-actions">
-          <span class="drag-handle" title="Arrastrar">☷</span>
-          <button type="button" class="admin-delete-btn" title="Eliminar">🗑</button>
-        </div>`;
-    if (isLogged) {
-        card.querySelector('.admin-delete-btn').addEventListener('click', e => { e.stopPropagation(); eliminarPortfolio(item.id); });
-        activarDrag(card, 'portfolioGrid', '/api/portfolio/reordenar');
-    }
-    grid.appendChild(card);
-}
-
-function adminFetch(url, options = {}) {
-    if (!IS_ADMIN_PAGE || !adminToken) {
-        return Promise.reject(new Error('No autorizado'));
-    }
-
-    const opts = { ...options };
-    opts.headers = {
-        ...(options.headers || {}),
-        'Authorization': `Bearer ${adminToken}`
-    };
-
-    return fetch(url, opts).then(async response => {
-        if (response.status === 401) {
-            sessionStorage.removeItem('adminToken');
-            adminToken = '';
-            isLogged = false;
-            document.body.classList.remove('admin-mode');
-            throw new Error('Sesión de administrador no válida');
-        }
-        return response;
-    });
+function appendFotoHtml(src, cat) {
+    const card = document.createElement('div'); card.className = 'portfolio-card'; card.setAttribute('data-category', cat);
+    card.innerHTML = `<img src="${src}">`;
+    document.getElementById('portfolioGrid').insertBefore(card, document.getElementById('portfolioGrid').firstChild);
 }
 
 // 1. Guardar Portfolio usando AJAX / FormData real (Corrige las recargas erróneas del navegador)
@@ -152,7 +111,7 @@ function savePortfolioItem(e) {
     
     const formData = new FormData(e.target);
 
-    adminFetch('/guardarPortfolio', {
+    fetch('/guardarPortfolio', {
         method: 'POST',
         body: formData
     })
@@ -170,46 +129,6 @@ function savePortfolioItem(e) {
 }
 
 // 2. Guardar Oferta (Flash) usando Multer hacia Node.js
-function activarDrag(card, containerId, endpoint) {
-    card.addEventListener('dragstart', e => {
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', card.dataset.id);
-    });
-    card.addEventListener('dragend', async () => {
-        card.classList.remove('dragging');
-        const container = document.getElementById(containerId);
-        const orden = Array.from(container.querySelectorAll('[data-id]')).map(x => Number(x.dataset.id));
-        try {
-            const r = await adminFetch(endpoint, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({orden}) });
-            if (!r.ok) throw new Error();
-        } catch(e) { alert('No se pudo guardar el nuevo orden.'); location.reload(); }
-    });
-    card.addEventListener('dragover', e => {
-        e.preventDefault();
-        const dragging = document.querySelector('.dragging');
-        if (!dragging || dragging === card) return;
-        const rect = card.getBoundingClientRect();
-        const before = e.clientY < rect.top + rect.height / 2;
-        const container = document.getElementById(containerId);
-        container.insertBefore(dragging, before ? card : card.nextSibling);
-    });
-}
-
-async function eliminarElemento(endpoint, id, mensaje) {
-    if (!isLogged) return alert('Debes iniciar sesión como administrador.');
-    if (!confirm(mensaje)) return;
-    try {
-        const r = await adminFetch(`${endpoint}/${id}`, { method:'DELETE' });
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || 'Error');
-        location.reload();
-    } catch(e) { console.error(e); alert('No se pudo eliminar.'); }
-}
-
-function eliminarOferta(id) { eliminarElemento('/api/ofertas', id, '¿Eliminar esta oferta? Esta acción no se puede deshacer.'); }
-function eliminarFaq(id) { eliminarElemento('/api/faq', id, '¿Eliminar esta pregunta? Esta acción no se puede deshacer.'); }
-
 function saveOfertaItem() {
     const t = document.getElementById('ofTitle').value;
     const p = document.getElementById('ofPrice').value;
@@ -221,7 +140,7 @@ function saveOfertaItem() {
     formData.append('precio', p);
     formData.append('imagen', f);
 
-    adminFetch('/guardarOferta', {
+    fetch('/guardarOferta', {
         method: 'POST',
         body: formData
     })
@@ -249,7 +168,7 @@ function saveFaqItem() {
     const a = document.getElementById('faqA').value;
     if(!q || !a) return alert('Completa los campos.');
 
-    adminFetch('/guardarFaq', {
+    fetch('/guardarFaq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pregunta: q, respuesta: a })
@@ -270,47 +189,6 @@ function appendFaqHtml(q, a) {
     const div = document.createElement('div'); div.className = 'faq-item';
     div.innerHTML = `<div class="faq-question" onclick="this.parentElement.classList.toggle('open')">${q} <span>+</span></div><div class="faq-answer">${a}</div>`;
     document.getElementById('faqList').appendChild(div);
-}
-
-async function eliminarPortfolio(id) {
-    if (!isLogged) return alert('Debes iniciar sesión como administrador.');
-    if (!confirm('¿Seguro que quieres eliminar este trabajo? Esta acción no se puede deshacer.')) return;
-    try {
-        const response = await adminFetch(`/api/portfolio/${id}`, { method: 'DELETE' });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'No se pudo eliminar');
-        cargarPortfolioDesdeBD();
-    } catch (error) {
-        console.error(error);
-        alert('No se pudo eliminar el trabajo.');
-    }
-}
-
-async function moverPortfolio(card, direccion) {
-    if (!isLogged) return alert('Debes iniciar sesión como administrador.');
-    const grid = document.getElementById('portfolioGrid');
-    const cards = Array.from(grid.querySelectorAll('.portfolio-card'));
-    const indice = cards.indexOf(card);
-    const nuevoIndice = indice + direccion;
-    if (nuevoIndice < 0 || nuevoIndice >= cards.length) return;
-
-    if (direccion < 0) grid.insertBefore(card, cards[nuevoIndice]);
-    else grid.insertBefore(card, cards[nuevoIndice].nextSibling);
-
-    const orden = Array.from(grid.querySelectorAll('.portfolio-card')).map(c => Number(c.dataset.id));
-    try {
-        const response = await adminFetch('/api/portfolio/reordenar', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ orden })
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'No se pudo guardar el orden');
-    } catch (error) {
-        console.error(error);
-        alert('No se pudo guardar el nuevo orden.');
-        cargarPortfolioDesdeBD();
-    }
 }
 
 function filtrarEstilo(filterValue, button) {
@@ -410,7 +288,7 @@ function enviarCorreoCita(e) {
     }
 
     // Petición directa a tu servidor local en el puerto 3006
-    fetch('/api/citas-correo', {
+    fetch('http://localhost:3006/api/citas-correo', {
         method: 'POST',
         body: formData // Recuerda: No definas 'Content-Type' en los headers, el navegador lo gestiona solo
     })
@@ -439,74 +317,48 @@ function resetearFormularioCita() {
 }
 
 /* --------------------------------------------------------------------------
-    CARRUSEL INFINITO
+    CARRUSEL DE IMÁGENES PROTEGIDO
     -------------------------------------------------------------------------- */
-function inicializarCarrusel(tattoos) {
-    const container = document.getElementById('carouselContainer');
-    const track = document.getElementById('carouselTrack');
+const container = document.getElementById('carouselContainer');
+const track = document.getElementById('carouselTrack');
+let currentIndex = 2;
+let step = 330; 
+
+if (track && container) {
+    let items = Array.from(track.children);
     const nextBtn = document.querySelector('.next-btn');
     const prevBtn = document.querySelector('.prev-btn');
-    if (!container || !track || !tattoos || !tattoos.length) return;
+    const gap = 30; const itemWidth = 300; step = itemWidth + gap; const itemsToClone = 2; 
 
-    track.innerHTML = '';
-    const SERVER_URL = '';
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
-
-    tattoos.forEach(tattoo => {
-        const item = document.createElement('div');
-        item.className = 'carousel-item';
-        const img = document.createElement('img');
-        const rutaLimpia = (tattoo.imagen || '').replace(/\\/g, '/');
-        img.src = `${SERVER_URL}/${rutaLimpia}`;
-        img.alt = `Tatuaje estilo ${tattoo.estilo || 'Microrealismo'}`;
-        img.addEventListener('click', () => {
-            if (!lightbox || !lightboxImg) return;
-            lightboxImg.src = img.src;
-            lightbox.style.display = 'flex';
-            setTimeout(() => lightbox.classList.add('active'), 10);
-        });
-        item.appendChild(img);
-        track.appendChild(item);
-    });
-
-    const originals = Array.from(track.children);
-    if (originals.length === 1) { originals[0].classList.add('active-center'); return; }
-
-    // Clones a ambos lados para conseguir un bucle visualmente infinito.
-    originals.slice().reverse().forEach(item => track.insertBefore(item.cloneNode(true), track.firstChild));
-    originals.forEach(item => track.appendChild(item.cloneNode(true)));
-
-    let items = Array.from(track.children);
-    let currentIndex = originals.length;
-    let autoPlay;
-
-    function actualizarCentro() {
-        items.forEach((item, i) => item.classList.toggle('active-center', i === currentIndex));
+    for (let i = 0; i < itemsToClone; i++) {
+        let firstClone = items[i].cloneNode(true);
+        let lastClone = items[items.length - 1 - i].cloneNode(true);
+        track.appendChild(firstClone);
+        track.insertBefore(lastClone, track.firstChild);
     }
+    items = Array.from(track.children);
 
-    function mover(index, animate = true) {
-        const item = items[index];
-        if (!item) return;
-        const offset = item.offsetLeft + item.offsetWidth / 2 - container.clientWidth / 2;
-        track.style.transition = animate ? 'transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)' : 'none';
+    function moveToSlide(index, animate = true) {
+        if (animate) track.style.transition = "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)";
+        else track.style.transition = "none";
+        const containerWidth = container.offsetWidth;
+        const offset = (index * step) - (containerWidth / 2) + (itemWidth / 2);
         track.style.transform = `translateX(${-offset}px)`;
         currentIndex = index;
-        actualizarCentro();
+        items.forEach((item, idx) => {
+            if (idx === currentIndex) item.classList.add('active-center');
+            else item.classList.remove('active-center');
+        });
     }
-
     track.addEventListener('transitionend', () => {
-        const first = originals.length;
-        const last = originals.length * 2 - 1;
-        if (currentIndex > last) { currentIndex -= originals.length; mover(currentIndex, false); }
-        else if (currentIndex < first) { currentIndex += originals.length; mover(currentIndex, false); }
+        if (currentIndex >= items.length - itemsToClone) moveToSlide(itemsToClone, false);
+        if (currentIndex < itemsToClone) moveToSlide(items.length - itemsToClone - 1, false);
     });
+    if(nextBtn) nextBtn.addEventListener('click', () => moveToSlide(currentIndex + 1));
+    if(prevBtn) prevBtn.addEventListener('click', () => moveToSlide(currentIndex - 1));
 
-    if (nextBtn) nextBtn.onclick = () => mover(currentIndex + 1);
-    if (prevBtn) prevBtn.onclick = () => mover(currentIndex - 1);
-
-    
-    
+    window.addEventListener('load', () => moveToSlide(currentIndex, false));
+    window.addEventListener('resize', () => moveToSlide(currentIndex, false));
 }
 
 /* --------------------------------------------------------------------------
@@ -515,7 +367,7 @@ function inicializarCarrusel(tattoos) {
 window.addEventListener('DOMContentLoaded', () => {
     try {
         actualizarBotonNav();
-        if(IS_ADMIN_PAGE && isLogged) document.body.classList.add('admin-mode');
+        if(isLogged) document.body.classList.add('admin-mode');
         
         // Listener del formulario
         const formPortfolio = document.getElementById('form-portfolio');
@@ -551,7 +403,7 @@ function cargarPortfolioDesdeBD() {
 
             // 1. Renderizar las imágenes y recolectar los estilos
             data.forEach(item => {
-                appendFotoHtml(item);
+                appendFotoHtml(item.imagen, item.estilo);
                 if(item.estilo) {
                     // Guardamos el estilo en minúsculas/limpio para el data-category
                     estilosUnicos.add(item.estilo.trim());
@@ -587,112 +439,220 @@ function cargarPortfolioDesdeBD() {
 }
 
 // Modificada para procesar correctamente las rutas de archivos de Multer (\ a /)
-function appendFotoHtml(item) {
+function appendFotoHtml(src, cat) {
     const grid = document.getElementById('portfolioGrid');
     if (!grid) return;
-    const card = document.createElement('div');
-    card.className = 'portfolio-card admin-draggable';
-    card.dataset.id = item.id;
-    card.dataset.category = item.estilo || '';
-    card.draggable = isLogged;
-    const cleanSrc = (item.imagen || '').replace(/\\/g, '/');
-    const imageUrl = cleanSrc.startsWith('http') ? cleanSrc : `/${cleanSrc}`;
-    card.innerHTML = `<img src="${imageUrl}" alt="Trabajo de ${item.estilo || 'tatuaje'}">
-        <div class="admin-card-actions">
-          <span class="drag-handle" title="Arrastrar">☷</span>
-          <button type="button" class="admin-delete-btn" title="Eliminar">🗑</button>
-        </div>`;
-    if (isLogged) {
-        card.querySelector('.admin-delete-btn').addEventListener('click', e => { e.stopPropagation(); eliminarPortfolio(item.id); });
-        activarDrag(card, 'portfolioGrid', '/api/portfolio/reordenar');
-    }
-    grid.appendChild(card);
+    
+    const card = document.createElement('div'); 
+    card.className = 'portfolio-card'; 
+    card.setAttribute('data-category', cat);
+    
+    // Si la ruta guardada viene de Multer (ej: "uploads/archivo.jpg"), 
+    // nos aseguramos de normalizar las barras invertidas de Windows si existieran
+    const cleanSrc = src.replace(/\\/g, '/');
+    
+    card.innerHTML = `<img src="/${cleanSrc}" alt="Trabajo de ${cat}">`;
+    grid.appendChild(card); // Los agrega en orden de llegada
 }
 
 
-// CARROUSEL DINÁMICO
+//CARROUSEL
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = '/api/portfolio';
+    const API_URL = 'http://localhost:3006/api/portfolio'; 
+    const SERVER_URL = 'http://localhost:3006'; 
+
     const track = document.getElementById('carouselTrack');
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightboxImg');
     const lightboxClose = document.querySelector('.lightbox-close');
-    if (!track) return;
 
+    // 1. Cargar imágenes desde el servidor
     fetch(API_URL)
-        .then(response => { if (!response.ok) throw new Error('Error en la red'); return response.json(); })
-        .then(tattoos => inicializarCarrusel(tattoos))
+        .then(response => {
+            if (!response.ok) throw new Error('Error en la red');
+            return response.json();
+        })
+        .then(tattoos => {
+            track.innerHTML = '';
+
+            tattoos.forEach(tattoo => {
+                const item = document.createElement('div');
+                item.className = 'carousel-item';
+
+                const img = document.createElement('img');
+                const rutaLimpia = tattoo.imagen.replace(/\\/g, '/');
+                
+                img.src = `${SERVER_URL}/${rutaLimpia}`; 
+                img.alt = `Tatuaje estilo ${tattoo.estilo || 'Microrealismo'}`;
+
+                // EVENTO DE CLIC: Asigna la función de ampliar a cada imagen nueva
+                img.addEventListener('click', () => {
+                    lightboxImg.src = img.src;
+                    lightbox.style.display = 'flex';
+                    setTimeout(() => lightbox.classList.add('active'), 10);
+                });
+
+                item.appendChild(img);
+                track.appendChild(item);
+            });
+        })
         .catch(err => {
             console.error('Error al renderizar el portfolio:', err);
             track.innerHTML = '<p class="error-msg">No se pudieron cargar los últimos trabajos.</p>';
         });
 
+    // 2. Cerrar el Lightbox (Al hacer clic en la X o fuera de la imagen)
     function cerrarLightbox() {
-        if (!lightbox || !lightboxImg) return;
         lightbox.classList.remove('active');
-        setTimeout(() => { lightbox.style.display = 'none'; lightboxImg.src = ''; }, 300);
+        setTimeout(() => {
+            lightbox.style.display = 'none';
+            lightboxImg.src = ''; // Limpia la ruta para la próxima carga
+        }, 300);
     }
-    if (lightboxClose) lightboxClose.addEventListener('click', cerrarLightbox);
-    if (lightbox) lightbox.addEventListener('click', e => { if (e.target !== lightboxImg && e.target !== lightboxClose) cerrarLightbox(); });
+
+    lightboxClose.addEventListener('click', cerrarLightbox);
+    lightbox.addEventListener('click', (e) => {
+        // Si hace clic en el fondo negro (no en la imagen), se cierra
+        if (e.target !== lightboxImg && e.target !== lightboxClose) {
+            cerrarLightbox();
+        }
+    });
 });
 
 
-// OFERTAS
- document.addEventListener('DOMContentLoaded', () => {
-    const OFERTAS_API_URL = '/api/ofertas';
-    const SERVER_URL = '';
+//OFERTAS
+document.addEventListener('DOMContentLoaded', () => {
+    // Si aún no tienes este endpoint GET en tu server.js, agrégalo (te dejo el código del server abajo)
+    const OFERTAS_API_URL = 'http://localhost:3006/api/ofertas'; 
+    const SERVER_URL = 'http://localhost:3006'; 
+
     const ofertasContainer = document.getElementById('ofertasContainer');
-    if (!ofertasContainer) return;
 
-    fetch(OFERTAS_API_URL).then(r => r.json()).then(ofertas => {
-        ofertasContainer.innerHTML = '';
-        if (!ofertas.length) { ofertasContainer.innerHTML = '<p class="error-msg">No hay ofertas disponibles.</p>'; return; }
-        ofertas.forEach(oferta => {
-            const card = document.createElement('div');
-            card.className = 'flash-card admin-draggable';
-            card.dataset.id = oferta.id;
-            card.draggable = isLogged;
-            const ruta = (oferta.imagen || '').replace(/\\/g, '/');
-            card.innerHTML = `<img src="${SERVER_URL}/${ruta}" class="flash-img" alt="${oferta.titulo}">
-                <div class="flash-info"><span class="flash-tag">Disponible</span><h3 class="flash-title">${oferta.titulo}</h3><div class="flash-price">${oferta.precio}€</div><button class="btn-principal" onclick="navegarA('contacto')">Reservar</button></div>
-                <div class="admin-card-actions"><span class="drag-handle" title="Arrastrar">☷</span><button type="button" class="admin-delete-btn" title="Eliminar">🗑</button></div>`;
-            if (isLogged) {
-                card.querySelector('.admin-delete-btn').addEventListener('click', e => { e.stopPropagation(); eliminarOferta(oferta.id); });
-                activarDrag(card, 'ofertasContainer', '/api/ofertas/reordenar');
-            }
-            ofertasContainer.appendChild(card);
-        });
-    }).catch(err => console.error('Error al renderizar ofertas:', err));
+    function cargarOfertasDesdeServidor() {
+        fetch(OFERTAS_API_URL)
+            .then(response => {
+                if (!response.ok) throw new Error('Error al conectar con la API de ofertas');
+                return response.json();
+            })
+            .then(ofertas => {
+                // Limpiamos el contenedor estático
+                ofertasContainer.innerHTML = '';
+
+                if (ofertas.length === 0) {
+                    ofertasContainer.innerHTML = '<p class="error-msg" style="grid-column: 1/-1; text-align: center;">No hay ofertas disponibles en este momento.</p>';
+                    return;
+                }
+
+                // Mapeamos cada fila devuelta de la tabla "ofertas"
+                ofertas.forEach(oferta => {
+                    const card = document.createElement('div');
+                    card.className = 'flash-card';
+
+                    // Limpieza de rutas de Multer por si estás en Windows
+                    const rutaLimpia = oferta.imagen.replace(/\\/g, '/');
+                    const imagenUrl = `${SERVER_URL}/${rutaLimpia}`;
+
+                    card.innerHTML = `
+                        <img src="${imagenUrl}" class="flash-img" alt="${oferta.titulo}">
+                        <div class="flash-info">
+                            <span class="flash-tag">Disponible</span>
+                            <h3 class="flash-title">${oferta.titulo}</h3>
+                            <div class="flash-price">${oferta.precio}€</div>
+                            <button class="btn-principal" onclick="navegarA('contacto')">Reservar</button>
+                        </div>
+                    `;
+
+                    // OPCIONAL: Si también quieres que las fotos de las ofertas se amplíen con el Lightbox
+                    const imgElement = card.querySelector('.flash-img');
+                    imgElement.style.cursor = 'zoom-in';
+                    imgElement.addEventListener('click', () => {
+                        const lightbox = document.getElementById('lightbox');
+                        const lightboxImg = document.getElementById('lightboxImg');
+                        if (lightbox && lightboxImg) {
+                            lightboxImg.src = imagenUrl;
+                            lightbox.style.display = 'flex';
+                            setTimeout(() => lightbox.classList.add('active'), 10);
+                        }
+                    });
+
+                    ofertasContainer.appendChild(card);
+                });
+            })
+            .catch(err => {
+                console.error('Error al renderizar las ofertas:', err);
+                ofertasContainer.innerHTML = '<p class="error-msg" style="grid-column: 1/-1; text-align: center;">No se pudieron cargar las ofertas.</p>';
+            });
+    }
+
+    cargarOfertasDesdeServidor();
 });
 
-// FAQ
- document.addEventListener('DOMContentLoaded', () => {
+//FAQ
+document.addEventListener('DOMContentLoaded', () => {
+    const FAQ_API_URL = 'http://localhost:3006/api/faq'; 
     const faqList = document.getElementById('faqList');
-    if (!faqList) return;
-    let todasLasPreguntas = [];
+    let todasLasPreguntas = []; // Array global para almacenar las FAQs del servidor
 
-    function renderizarFaqs(lista) {
+    // 1. Petición al servidor para obtener las FAQs
+    function cargarFaqsDesdeServidor() {
+        fetch(FAQ_API_URL)
+            .then(response => {
+                if (!response.ok) throw new Error('Error al conectar con la API de FAQ');
+                return response.json();
+            })
+            .then(faqs => {
+                todasLasPreguntas = faqs; // Guardamos los datos para el buscador
+                renderizarFaqs(todasLasPreguntas);
+            })
+            .catch(err => {
+                console.error('Error al renderizar las FAQs:', err);
+                faqList.innerHTML = '<p class="error-msg">No se pudieron cargar las preguntas frecuentes.</p>';
+            });
+    }
+
+    // 2. Función encargada de pintar el HTML
+    function renderizarFaqs(listaFaqs) {
         faqList.innerHTML = '';
-        if (!lista.length) { faqList.innerHTML = '<p class="error-msg">No se encontraron preguntas.</p>'; return; }
-        lista.forEach(faq => {
-            const item = document.createElement('div');
-            item.className = 'faq-item admin-draggable';
-            item.dataset.id = faq.id;
-            item.draggable = isLogged;
-            item.innerHTML = `<div class="faq-question">${faq.pregunta}<span>+</span></div><div class="faq-answer">${faq.respuesta}</div><div class="admin-card-actions"><span class="drag-handle" title="Arrastrar">☷</span><button type="button" class="admin-delete-btn" title="Eliminar">🗑</button></div>`;
-            item.querySelector('.faq-question').addEventListener('click', () => item.classList.toggle('open'));
-            if (isLogged) {
-                item.querySelector('.admin-delete-btn').addEventListener('click', e => { e.stopPropagation(); eliminarFaq(faq.id); });
-                activarDrag(item, 'faqList', '/api/faq/reordenar');
-            }
-            faqList.appendChild(item);
+
+        if (listaFaqs.length === 0) {
+            faqList.innerHTML = '<p class="error-msg" style="text-align: center;">No se encontraron preguntas.</p>';
+            return;
+        }
+
+        listaFaqs.forEach(faq => {
+            const faqItem = document.createElement('div');
+            faqItem.className = 'faq-item';
+
+            faqItem.innerHTML = `
+                <div class="faq-question">
+                    ${faq.pregunta} <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    ${faq.respuesta}
+                </div>
+            `;
+
+            // Añadimos el evento para abrir y cerrar el acordeón de forma dinámica
+            faqItem.querySelector('.faq-question').addEventListener('click', () => {
+                faqItem.classList.toggle('open');
+            });
+
+            faqList.appendChild(faqItem);
         });
     }
 
-    fetch('/api/faq').then(r => r.json()).then(faqs => { todasLasPreguntas = faqs; renderizarFaqs(faqs); }).catch(err => console.error('Error al renderizar FAQs:', err));
-
+    // 3. Lógica del buscador en tiempo real
     window.buscarPreguntas = function() {
         const query = document.getElementById('faqSearch').value.toLowerCase().trim();
-        renderizarFaqs(todasLasPreguntas.filter(f => f.pregunta.toLowerCase().includes(query) || f.respuesta.toLowerCase().includes(query)));
+        
+        // Filtramos sobre el array guardado en memoria
+        const faqsFiltradas = todasLasPreguntas.filter(faq => 
+            faq.pregunta.toLowerCase().includes(query) || 
+            faq.respuesta.toLowerCase().includes(query)
+        );
+
+        renderizarFaqs(faqsFiltradas);
     };
+
+    cargarFaqsDesdeServidor();
 });

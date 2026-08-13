@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vercel dev",
-    "start": "node server.js"
+    "dev": "vercel dev"
   },
   "engines": {
     "node": "24.x"
@@ -20,5 +19,6 @@
   },
   "devDependencies": {
     "vercel": "^58.9.5"
-  }
+  },
+  "type": "commonjs"
 }
