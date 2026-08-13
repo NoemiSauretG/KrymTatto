@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Krym Tattoo Studio</title>
+
+    <meta name="description"
+        content="Krym Tattoo Studio. Especialistas en Realismo, Fine Line, Blackwork y tatuajes personalizados.">
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <script src="script.js"></script>
+
+
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="nav">
+            <input type="checkbox" id="menu-toggle">
+            <label for="menu-toggle" class="menu-icon">☰</label>
+            
+            <div class="logo"><img src="./img/logo.png"></div>
+
+            <nav class="menu">
+                <ul>
+                    <li><a class="nav-link active" onclick="navegarA('inicio')">Inicio</a></li>
+                    <li><a class="nav-link" onclick="navegarA('portfolio')">Portafolio</a></li>
+                    <li><a class="nav-link" onclick="navegarA('ofertas')">Ofertas</a></li>
+                    <li><a class="nav-link" onclick="navegarA('faq')">FAQ</a></li>
+                    <li><a class="nav-link" onclick="navegarA('contacto')">Contacto</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-right-buttons">
+                <a class="btn-book" id="btnStatusLogin" onclick="controlLoginGlobal()">Iniciar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 1. INICIO -->
+    <section id="inicio" class="active-section">
+        <div class="quien-soy-block">
+            <div class="quien-soy-texto">
+                <h1>¿Quién soy?</h1>
+                <p>Soy tatuador especializado en microrealismo y línea fina. Me gusta crear tatuajes sencillos, delicados y personalizados, cuidando cada detalle.</p>
+            </div>
+            <!-- Foto remota estable de Unsplash -->
+            <div class="quien-soy-foto"><img src="./img/gian.jpeg" alt="Krym Artista"></div>
+        </div>
+        <div class="carousel-wrapper">
+            <button class="carousel-btn prev-btn">&#10094;</button>
+            <div class="carousel-container" id="carouselContainer">
+                <div class="carousel-track" id="carouselTrack">
+                    <div class="carousel-item"><img src="https://images.unsplash.com/photo-1611501275019-9b5cda994e8d?w=500&auto=format&fit=crop&q=80"></div>
+                    <div class="carousel-item"><img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=500&auto=format&fit=crop&q=80"></div>
+                    <div class="carousel-item"><img src="https://images.unsplash.com/photo-1590246814883-57a511fbc9f3?w=500&auto=format&fit=crop&q=80"></div>
+                    <div class="carousel-item"><img src="https://images.unsplash.com/photo-1542226601-bc82e276ec0a?w=500&auto=format&fit=crop&q=80"></div>
+                </div>
+            </div>
+            <button class="carousel-btn next-btn">&#10095;</button>
+        </div>
+    </section>
+
+    <!-- 2. PORTAFOLIO -->
+    <section id="portfolio">
+        <div class="section-header-admin">
+            <h2 class="section-title">Portafolio</h2>
+            <button class="btn-admin-action" onclick="abrirModal('modalPortfolio')">+ Añadir Trabajo</button>
+        </div>
+        <!-- Este contenedor ahora se llenará dinámicamente desde JavaScript -->
+        <div class="filter-container" id="filterContainer">
+            <button class="filter-btn active" onclick="filtrarEstilo('all', this)">Todos</button>
+        </div>
+        
+        <div class="portfolio-grid" id="portfolioGrid"></div>
+    </section>
+
+    <!-- 3. OFERTAS -->
+    <section id="ofertas">
+        <div class="section-header-admin">
+            <h2 class="section-title">Flashes y Ofertas</h2>
+            <button class="btn-admin-action" onclick="abrirModal('modalOfertas')">+ Añadir Oferta</button>
+        </div>
+        <!-- Contenedor vacío que se rellenará desde la base de datos -->
+        <div class="ofertas-container" id="ofertasContainer"></div>
+    </section>
+
+    <!-- 4. FAQ -->
+    <section id="faq">
+        <div class="section-header-admin">
+            <h2 class="section-title">Preguntas Frecuentes</h2>
+            <button class="btn-admin-action" onclick="abrirModal('modalFaq')">+ Añadir FAQ</button>
+        </div>
+        <input type="text" id="faqSearch" class="faq-search" placeholder="Buscar dudas..." oninput="buscarPreguntas()">
+        <!-- Contenedor vacío que se rellenará desde la base de datos -->
+        <div class="faq-list" id="faqList"></div>
+    </section>
+
+    <!-- 5. CONTACTO Y CALENDARIO -->
+    <section id="contacto">
+        <div class="section-header-admin">
+            <h2 class="section-title">Citas e Información</h2>
+            <button class="btn-admin-action" onclick="activarModoGestionFestivos()">⚙️ Gestionar Festivos</button>
+        </div>
+        <div class="contacto-wrapper">
+            <!-- Columna Izquierda: Calendario -->
+            <div>
+                <div class="calendar-box">
+                    <div class="calendar-header">
+                        <button class="btn-secundario" style="padding:5px 15px;" onclick="cambiarMes(-1)">◀</button>
+                        <h3 id="calendarMonthTitle" style="font-size:1rem; font-weight:400; letter-spacing:1px;">Julio 2026</h3>
+                        <button class="btn-secundario" style="padding:5px 15px;" onclick="cambiarMes(1)">▶</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+                <div id="adminHollidayHelper" style="display:none; color:#d4b58a; font-family:sans-serif; font-size:0.8rem; text-align:center;">
+                    * Modo Administrador activo: Haz clic en cualquier día para activarlo/desactivarlo como festivo.
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Formulario Correo -->
+            <form id="appointmentForm" onsubmit="enviarCorreoCita(event)">
+                <input type="hidden" id="selectedDateInput" required>
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="formName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Tu Correo Electrónico</label>
+                    <input type="email" id="formEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Idea del Diseño</label>
+                    <textarea id="formIdea" class="form-control" required></textarea>
+                </div>
+                <!-- Campo para la foto de referencia -->
+                <div class="form-group">
+                    <label>Foto de Referencia (Opcional)</label>
+                    <input type="file" id="formFoto" class="form-control" accept="image/*" style="padding: 10px;">
+                </div>
+                <button type="submit" class="btn-principal" style="width:100%;">Enviar Solicitud de Reserva</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- MODALES ADMINISTRATIVOS -->
+    <div id="modalPortfolio" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal('modalPortfolio')">×</span>
+            <h3 style="margin-bottom:20px; color:#d4b58a;">Subir Nuevo Trabajo</h3>
+            <form id="form-portfolio">
+                <div class="form-group"><label>Imagen del Tatuaje</label><input type="file" name="imagen" accept="image/*" class="form-control"></div>
+                <div class="form-group">
+                    <label>Estilo</label>
+                    <select name="estilo" class="select-control"><option value="puntillismo">Puntillismo</option><option value="lettering">Lettering</option><option value="linea fina">Línea Fina</option><option value="microrealismo">Microrealismo</option><option value="blackwork">Blackwork</option><option value="realismo">Realismo</option></select>
+                </div>
+                <button type="submit" class="btn-principal">Publicar</button>
+            </form>
+            
+        </div>
+    </div>
+
+    <div id="modalOfertas" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal('modalOfertas')">×</span>
+            <h3 style="margin-bottom:20px; color:#d4b58a;">Publicar Flash</h3>
+            <div class="form-group"><label>Título</label><input type="text" id="ofTitle" class="form-control"></div>
+            <div class="form-group"><label>Precio (€)</label><input type="text" id="ofPrice" class="form-control"></div>
+            <div class="form-group"><label>Imagen del Flash</label><input type="file" id="ofFile" accept="image/*" class="form-control"></div>
+            <button class="btn-principal" onclick="saveOfertaItem()">Subir Oferta</button>
+        </div>
+    </div>
+
+    <div id="modalFaq" class="modal-overlay">
+        <div class="modal-content">
+            <span class="modal-close" onclick="cerrarModal('modalFaq')">×</span>
+            <h3 style="margin-bottom:20px; color:#d4b58a;">Añadir Pregunta</h3>
+            <div class="form-group"><label>Pregunta</label><input type="text" id="faqQ" class="form-control"></div>
+            <div class="form-group"><label>Respuesta</label><textarea id="faqA" class="form-control"></textarea></div>
+            <button class="btn-principal" onclick="saveFaqItem()">Guardar Pregunta</button>
+        </div>
+    </div>
+
+    <!-- --------------------------------------------------------------------------
+    FOOTER (PIE DE PÁGINA)
+    -------------------------------------------------------------------------- -->
+    <footer class="main-footer">
+        <!-- Contenedor principal de las 3 columnas -->
+        <div class="footer-content">
+            
+            <!-- Columna 1: Info -->
+            <div class="footer-column">
+                <div class="logo"><img src="./img/logo_footer.png"></div>
+                <p class="footer-description">Arte e identidad plasmados en tu piel...</p>
+            </div>
+
+            <!-- Columna 2: Navegación -->
+            <div class="footer-column">
+                <h4>Navegación</h4>
+                <ul class="footer-links">
+                    <li><a href="#" onclick="navegarA('inicio'); return false;">Inicio</a></li>
+                    <li><a href="#" onclick="navegarA('portfolio'); return false;">Portafolio</a></li>
+                    <li><a href="#" onclick="navegarA('contacto'); return false;">Pedir Cita</a></li>
+                </ul>
+            </div>
+
+            <!-- Columna 3: Contacto -->
+            <div class="footer-column">
+                <h4>Contacto</h4>
+                <ul class="footer-contact-list">
+                    <li><a href="https://instagram.com/krymgian" target="_blank"><i class="fab fa-instagram icon-gold"></i> @krymgian</a></li>
+                    <li><a href="https://wa.me/34611679860" target="_blank"><i class="fab fa-whatsapp icon-gold"></i> +34 611 67 98 60</a></li>
+                    <li><a href="mailto:herorean5@gmail.com"><i class="far fa-envelope icon-gold"></i> herorean5@gmail.com</a></li>
+                </ul>
+            </div>
+
+        </div> <!-- ¡AQUÍ CIERRA EL CONTENEDOR DE COLUMNAS! -->
+
+        <!-- Barra final independiente con fondo negro puro (Fuera de las columnas) -->
+        <div class="footer-bottom-bar">
+            <div class="footer-bottom-container">
+                <p class="copyright-text">&copy; 2026 Krym Tattoo. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lightbox para ampliar imágenes -->
+    <div id="lightbox" class="lightbox">
+        <span class="lightbox-close">&times;</span>
+        <img class="lightbox-content" id="lightboxImg" src="" alt="Tatuaje ampliado">
+    </div>
+
+</body>
+</html>
