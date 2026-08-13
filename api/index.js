@@ -92,21 +92,33 @@ async function saveBlob(file, folder) {
 // PUBLIC
 // -----------------------------------------------------------------------------
 app.get("/api/test-db", async (req, res) => {
+    // Diagnóstico de variables de entorno (sin mostrar tu contraseña)
+    const envCheck = {
+        host: process.env.MYSQLHOST || "NO DEFINIDO",
+        port: process.env.MYSQLPORT || "NO DEFINIDO",
+        user: process.env.MYSQLUSER || "NO DEFINIDO",
+        database: process.env.MYSQLDATABASE || "NO DEFINIDO",
+        ssl: process.env.MYSQL_SSL || "NO DEFINIDO"
+    };
+
     try {
         const [rows] = await db.query("SELECT 1 AS conectado");
 
         res.json({
             ok: true,
             railway: true,
+            config_leida: envCheck,
             resultado: rows
         });
     } catch (err) {
-        console.error(err);
+        console.error("Error al conectar con Railway:", err);
 
         res.status(500).json({
             ok: false,
             railway: false,
-            error: err.message
+            config_leida: envCheck, // Te dirá qué variables está leyendo exactamente Node.js
+            error: err.message,
+            code: err.code
         });
     }
 });
