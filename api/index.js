@@ -29,10 +29,11 @@ const db = mysql.createPool({
     user: process.env.MYSQLUSER,
     password: process.env.MYSQLPASSWORD,
     database: process.env.MYSQLDATABASE,
-    ssl: process.env.MYSQL_SSL === "true" ? {} : undefined,
-    // 👇 AGREGA ESTAS LÍNEAS PARA VERCEL Y RAILWAY 👇
+    ssl: process.env.MYSQL_SSL === "true" 
+        ? { rejectUnauthorized: false } 
+        : undefined,
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 5,
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 10000
