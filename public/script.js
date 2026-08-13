@@ -1,9 +1,7 @@
-// Intentar EmailJS de forma segura
-try {
-    emailjs.init("4u42C2_23AP6nOlI3");
-} catch (e) {
-    console.log("EmailJS no cargado aún.");
-}
+fetch('/api/citas-correo', {
+    method: 'POST',
+    body: formData
+})
 
 /* --------------------------------------------------------------------------
     LOGIN / LOGOUT GLOBAL

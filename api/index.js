@@ -4,7 +4,6 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
 const { put, del } = require("@vercel/blob");
 
 const app = express();
@@ -397,22 +396,23 @@ app.post("/api/citas", async (req, res) => {
 // -----------------------------------------------------------------------------
 // EMAIL DE CONTACTO
 // -----------------------------------------------------------------------------
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: String(process.env.SMTP_SECURE || "true") === "true",
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
-    }
-});
 
 app.post("/api/citas-correo", upload.single("imagen"), async (req, res) => {
     try {
         const { nombre, email, idea } = req.body;
 
         if (!nombre || !email || !idea) {
-            return res.status(400).json({ error: "Faltan campos obligatorios" });
+            return res.status(400).json({
+                error: "Faltan campos obligatorios"
+            });
+        }
+
+        if (!process.env.RESEND_API_KEY) {
+            console.error("Falta RESEND_API_KEY");
+
+            return res.status(500).json({
+                error: "El servicio de correo no está configurado"
+            });
         }
 
         const attachments = [];
@@ -420,24 +420,67 @@ app.post("/api/citas-correo", upload.single("imagen"), async (req, res) => {
         if (req.file) {
             attachments.push({
                 filename: req.file.originalname,
-                content: req.file.buffer,
-                contentType: req.file.mimetype
+                content: req.file.buffer
             });
         }
 
-        await transporter.sendMail({
-            from: process.env.SMTP_FROM || process.env.SMTP_USER,
-            to: process.env.CONTACT_TO || process.env.SMTP_USER,
+        const { data, error } = await resend.emails.send({
+            from: process.env.EMAIL_FROM || "Krym Tattoo <onboarding@resend.dev>",
+            to: [
+                process.env.CONTACT_TO || "herorean5@gmail.com"
+            ],
             replyTo: email,
             subject: `Nueva idea de diseño - ${nombre}`,
-            text: `Nombre: ${nombre}\nEmail: ${email}\n\nIdea del diseño:\n${idea}`,
+
+            html: `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2>Nueva solicitud de cita</h2>
+
+                    <p>
+                        <strong>Nombre:</strong>
+                        ${nombre}
+                    </p>
+
+                    <p>
+                        <strong>Email:</strong>
+                        ${email}
+                    </p>
+
+                    <h3>Idea del diseño</h3>
+
+                    <p>
+                        ${idea.replace(/\n/g, "<br>")}
+                    </p>
+                </div>
+            `,
+
             attachments
         });
 
-        res.json({ success: true });
+        if (error) {
+            console.error("Error de Resend:", error);
+
+            return res.status(500).json({
+                error: "No se pudo enviar el correo",
+                detalle: error.message || error
+            });
+        }
+
+        console.log("Correo enviado:", data);
+
+        return res.json({
+            success: true,
+            messageId: data?.id
+        });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "No se pudo enviar el correo" });
+
+        console.error("Error enviando correo:", err);
+
+        return res.status(500).json({
+            error: "No se pudo enviar el correo",
+            detalle: err.message
+        });
     }
 });
 
