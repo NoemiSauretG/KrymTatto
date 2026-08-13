@@ -78,6 +78,14 @@ async function saveBlob(file, folder) {
 // -----------------------------------------------------------------------------
 // PUBLIC
 // -----------------------------------------------------------------------------
+app.get("/api", (req, res) => {
+    res.json({
+        ok: true,
+        mensaje: "Express funciona en Vercel",
+        url: req.url
+    });
+});
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
