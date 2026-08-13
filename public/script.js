@@ -125,21 +125,21 @@ function savePortfolioItem(e) {
 
     fetch('/guardarPortfolio', {
         method: 'POST',
-        body: formData
+        body: formData // Envía tanto el archivo como los campos de texto
     })
-        .then(res => {
-            if (!res.ok) throw new Error();
-            return res.text();
-        })
-        .then(msg => {
-            alert(msg);
-            cerrarModal('modalPortfolio');
-            e.target.reset();
-            window.location.reload();
-        })
-        .catch(() => {
-            alert('Error al subir el trabajo al servidor MySQL.');
-        });
+    .then(res => {
+        if (!res.ok) throw new Error();
+        return res.text();
+    })
+    .then(msg => {
+        alert(msg);
+        cerrarModal('modalPortfolio');
+        e.target.reset();
+        window.location.reload();
+    })
+    .catch(() => {
+        alert('Error al subir la imagen.');
+    });
 }
 
 function cargarPortfolioDesdeBD() {

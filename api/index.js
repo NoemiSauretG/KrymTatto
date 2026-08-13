@@ -5,6 +5,9 @@ const path = require("path");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
 const { put, del } = require("@vercel/blob");
+const { put } = require('@vercel/blob');
+
+const app = express();
 
 const app = express();
 
@@ -38,10 +41,9 @@ const db = mysql.createPool({
     keepAliveInitialDelay: 10000
 });
 
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 }
-});
+// Configurar multer para procesar la imagen en memoria (sin guardarla en el disco)
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -185,43 +187,58 @@ app.post("/api/login", (req, res) => {
 // -----------------------------------------------------------------------------
 // ADMIN - CREAR
 // -----------------------------------------------------------------------------
-app.post("/guardarPortfolio", requireAdmin, upload.single("imagen"), async (req, res) => {
+app.post('/guardarPortfolio', upload.single('imagen'), async (req, res) => {
     try {
         const { estilo } = req.body;
-        if (!req.file) return res.status(400).json({ error: "Falta la imagen" });
+        const file = req.file;
 
-        const imagen = await saveBlob(req.file, "portfolio");
-        const posicion = await nextPosition("portfolio");
+        if (!file) {
+            return res.status(400).send('No se ha adjuntado ninguna imagen.');
+        }
 
-        const [result] = await db.query(
-            "INSERT INTO portfolio (estilo, imagen, posicion) VALUES (?, ?, ?)",
-            [estilo, imagen, posicion]
-        );
+        // 1. Subir la imagen a Vercel Blob
+        // 'portfolio/' crea una subcarpeta virtual en Blob
+        const blob = await put(`portfolio/${Date.now()}-${file.originalname}`, file.buffer, {
+            access: 'public',
+        });
 
-        res.json({ success: true, id: result.insertId, imagen, posicion });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "No se pudo guardar el trabajo" });
+        // 'blob.url' contiene la URL pública y definitiva de la imagen (ej: https://...public.blob.vercel-storage.com/...)
+        const imageUrl = blob.url;
+
+        // 2. Guardar la URL resultante en MySQL (Railway)
+        const sql = 'INSERT INTO portfolio (imagen, estilo) VALUES (?, ?)';
+        await db.query(sql, [imageUrl, estilo]);
+
+        res.status(200).send('Trabajo guardado correctamente en Vercel Blob y BD.');
+
+    } catch (error) {
+        console.error('Error al subir a Vercel Blob:', error);
+        res.status(500).send('Error interno al guardar la imagen.');
     }
 });
 
-app.post("/guardarOferta", requireAdmin, upload.single("imagen"), async (req, res) => {
+app.post('/guardarOferta', upload.single('imagen'), async (req, res) => {
     try {
         const { titulo, precio } = req.body;
-        if (!req.file) return res.status(400).json({ error: "Falta la imagen" });
+        const file = req.file;
 
-        const imagen = await saveBlob(req.file, "ofertas");
-        const posicion = await nextPosition("ofertas");
+        if (!file) {
+            return res.status(400).send('Falta la imagen de la oferta.');
+        }
 
-        const [result] = await db.query(
-            "INSERT INTO ofertas (titulo, precio, imagen, posicion) VALUES (?, ?, ?, ?)",
-            [titulo, precio, imagen, posicion]
-        );
+        // Subir a la carpeta 'ofertas/' en Vercel Blob
+        const blob = await put(`ofertas/${Date.now()}-${file.originalname}`, file.buffer, {
+            access: 'public',
+        });
 
-        res.json({ success: true, id: result.insertId, imagen, posicion });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "No se pudo guardar la oferta" });
+        const sql = 'INSERT INTO ofertas (titulo, precio, imagen) VALUES (?, ?, ?)';
+        await db.query(sql, [titulo, precio, blob.url]);
+
+        res.status(200).send('Oferta publicada con éxito.');
+
+    } catch (error) {
+        console.error('Error al guardar la oferta:', error);
+        res.status(500).send('Error al guardar la oferta.');
     }
 });
 
