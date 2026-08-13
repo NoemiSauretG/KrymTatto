@@ -17,12 +17,12 @@ const PUBLIC_DIR = path.join(__dirname, "..", "public");
 app.use(express.static(PUBLIC_DIR));
 
 const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    ssl: process.env.DB_SSL === "true" ? {} : undefined
+    host: process.env.MYSQLHOST,
+    port: Number(process.env.MYSQLPORT || 3306),
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
+    ssl: process.env.MYSQL_SSL === "true" ? {} : undefined
 });
 
 const upload = multer({
