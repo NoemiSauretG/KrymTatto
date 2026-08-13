@@ -4,7 +4,6 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
-const { put, del } = require("@vercel/blob");
 const { put } = require('@vercel/blob');
 
 const app = express();
