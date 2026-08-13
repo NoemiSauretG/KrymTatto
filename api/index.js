@@ -78,12 +78,24 @@ async function saveBlob(file, folder) {
 // -----------------------------------------------------------------------------
 // PUBLIC
 // -----------------------------------------------------------------------------
-app.get("/api", (req, res) => {
-    res.json({
-        ok: true,
-        mensaje: "Express funciona en Vercel",
-        url: req.url
-    });
+app.get("/api/test-db", async (req, res) => {
+    try {
+        const [rows] = await db.query("SELECT 1 AS conectado");
+
+        res.json({
+            ok: true,
+            railway: true,
+            resultado: rows
+        });
+    } catch (err) {
+        console.error(err);
+
+        res.status(500).json({
+            ok: false,
+            railway: false,
+            error: err.message
+        });
+    }
 });
 
 app.get("/", (req, res) => {
