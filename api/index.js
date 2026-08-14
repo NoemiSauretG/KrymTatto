@@ -602,7 +602,7 @@ app.post(
 ============================================================ */
 
 app.post(
-    "/guardarOferta",
+    "/api/guardarOferta",
     requireAdmin,
     upload.single("imagen"),
     async (req, res) => {
