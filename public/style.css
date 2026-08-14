@@ -1060,95 +1060,6 @@ body.admin-mode .admin-edit-help {
         opacity: .9;
     }
 
-    /* Carrusel móvil: más cómodo y visual */
-    body.public-site .carousel-wrapper {
-        position: relative;
-        width: 100%;
-        margin: 0;
-        display: block;
-    }
-
-    body.public-site .carousel-container {
-        width: 100%;
-        overflow: hidden;
-        padding: 28px 0 45px;
-        touch-action: pan-y;
-        -webkit-user-select: none;
-        user-select: none;
-    }
-
-    body.public-site .carousel-track {
-        gap: 12px;
-        will-change: transform;
-    }
-
-    body.public-site .carousel-item {
-        flex: 0 0 68vw;
-        width: 68vw;
-        max-width: 275px;
-        height: 390px;
-        border-radius: 4px;
-        transform: scale(.88);
-        filter: grayscale(70%) brightness(.48);
-        transition:
-            transform .35s ease,
-            filter .35s ease,
-            opacity .35s ease;
-    }
-
-    body.public-site .carousel-item.active-center {
-        transform: scale(1);
-        filter: grayscale(0%) brightness(1);
-        box-shadow:
-            0 18px 45px rgba(0,0,0,.55),
-            0 0 0 1px rgba(212,181,138,.18);
-    }
-
-    body.public-site .carousel-btn {
-        width: 38px;
-        height: 38px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background: rgba(5,5,5,.72);
-        border: 1px solid rgba(212,181,138,.35);
-        font-size: 1rem;
-    }
-
-    body.public-site .prev-btn {
-        left: 8px;
-        top: 48%;
-        transform: translateY(-50%);
-    }
-
-    body.public-site .next-btn {
-        right: 8px;
-        top: 48%;
-        transform: translateY(-50%);
-    }
-
-    /* Pequeño indicador para dejar claro que se puede deslizar */
-    body.public-site .carousel-wrapper::after {
-        content: "DESLIZA PARA VER MÁS";
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: #777;
-        font-family: "Montserrat", sans-serif;
-        font-size: .5rem;
-        letter-spacing: 2.5px;
-        white-space: nowrap;
-        pointer-events: none;
-    }
-}
-
-
-@media (max-width: 768px) {
-
-
     /* Evita que los botones de edición/borrado aparezcan en la web pública */
     body.public-site .admin-card-actions,
     body.public-site .admin-edit-help,
@@ -1300,141 +1211,6 @@ body.admin-mode .admin-edit-help {
 }
 
 
-/* ============================================================
-   CARRUSEL MÓVIL
-   Imagen central clara + imágenes laterales visibles y oscuras
-   ============================================================ */
-
-@media (max-width: 768px) {
-
-    body.public-site .carousel-wrapper {
-        width: 100%;
-        margin: 0 auto;
-        position: relative;
-        overflow: hidden;
-    }
-
-    body.public-site .carousel-container {
-        width: 100%;
-        overflow: hidden;
-        padding: 25px 0 45px;
-        touch-action: pan-y;
-    }
-
-    body.public-site .carousel-track {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: max-content;
-        will-change: transform;
-    }
-
-    /* FOTOS LATERALES */
-    body.public-site .carousel-item {
-        flex: 0 0 68vw;
-        width: 68vw;
-        max-width: 280px;
-        height: min(100vw, 390px);
-        min-height: 280px;
-
-        overflow: hidden;
-        border-radius: 5px;
-
-        transform: scale(.78);
-        transform-origin: center center;
-
-        /* Se siguen viendo, pero más oscuras */
-        filter:
-            grayscale(45%)
-            brightness(.42)
-            contrast(.95);
-
-        opacity: .72;
-
-        transition:
-            transform .4s cubic-bezier(.22,1,.36,1),
-            filter .4s ease,
-            opacity .4s ease;
-    }
-
-    /* Imagen */
-    body.public-site .carousel-item img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
-        pointer-events: none;
-    }
-
-    /* FOTO CENTRAL */
-    body.public-site .carousel-item.active-center {
-        transform: scale(1);
-        filter:
-            grayscale(0%)
-            brightness(1)
-            contrast(1);
-
-        opacity: 1;
-        z-index: 5;
-
-        box-shadow:
-            0 15px 40px rgba(0,0,0,.65),
-            0 0 0 1px rgba(212,181,138,.25);
-    }
-
-    /* BOTONES */
-    body.public-site .carousel-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-
-        width: 36px;
-        height: 36px;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        padding: 0;
-        border-radius: 50%;
-
-        background: rgba(5,5,5,.8);
-        border: 1px solid rgba(212,181,138,.35);
-
-        color: #d4b58a;
-        z-index: 10;
-    }
-
-    body.public-site .prev-btn {
-        left: 7px;
-    }
-
-    body.public-site .next-btn {
-        right: 7px;
-    }
-
-    /* Indicador */
-    body.public-site .carousel-wrapper::after {
-        content: "DESLIZA PARA VER MÁS";
-
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-
-        transform: translateX(-50%);
-
-        color: #666;
-        font-family: "Montserrat", sans-serif;
-        font-size: .48rem;
-        letter-spacing: 2.5px;
-
-        white-space: nowrap;
-        pointer-events: none;
-    }
-}
-
-
 /* Móviles pequeños */
 @media (max-width: 380px) {
 
@@ -1449,5 +1225,116 @@ body.admin-mode .admin-edit-help {
 
     body.public-site .carousel-item.active-center {
         transform: scale(1);
+    }
+}
+
+/* ============================================================
+   KRYM - CARRUSEL MÓVIL
+   ÚNICA CONFIGURACIÓN RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+    body.public-site .carousel-wrapper {
+        position: relative;
+        width: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    body.public-site .carousel-container {
+        width: 100%;
+        overflow: hidden;
+        padding: 22px 0 42px;
+        touch-action: pan-y;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    body.public-site .carousel-track {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        width: max-content;
+        will-change: transform;
+    }
+
+    body.public-site .carousel-item {
+        flex: 0 0 70vw;
+        width: 70vw;
+        max-width: 280px;
+        height: min(96vw, 390px);
+        min-height: 275px;
+        overflow: hidden;
+        border-radius: 5px;
+        transform: scale(.80);
+        transform-origin: center center;
+        opacity: .72;
+        filter: grayscale(45%) brightness(.45) contrast(.95);
+        transition:
+            transform .4s cubic-bezier(.22,1,.36,1),
+            filter .4s ease,
+            opacity .4s ease;
+    }
+
+    body.public-site .carousel-item img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        pointer-events: none;
+    }
+
+    body.public-site .carousel-item.active-center {
+        transform: scale(1);
+        opacity: 1;
+        filter: grayscale(0%) brightness(1) contrast(1);
+        z-index: 5;
+        box-shadow:
+            0 15px 40px rgba(0,0,0,.65),
+            0 0 0 1px rgba(212,181,138,.22);
+    }
+
+    body.public-site .carousel-btn {
+        position: absolute;
+        top: 48%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(5,5,5,.80);
+        border: 1px solid rgba(212,181,138,.35);
+        color: #d4b58a;
+        z-index: 10;
+    }
+
+    body.public-site .prev-btn { left: 7px; }
+    body.public-site .next-btn { right: 7px; }
+
+    body.public-site .carousel-wrapper::after {
+        content: "DESLIZA PARA VER MÁS";
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #666;
+        font-family: "Montserrat", sans-serif;
+        font-size: .48rem;
+        letter-spacing: 2.5px;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+}
+
+@media (max-width: 380px) {
+    body.public-site .carousel-item {
+        flex-basis: 72vw;
+        width: 72vw;
+        height: 94vw;
+        min-height: 265px;
     }
 }
