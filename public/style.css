@@ -170,16 +170,13 @@ body {
         }
 
         /* Respuesta OCULTA por defecto */
-.faq-answer {
-    display: none;
-    color: #888;
-    font-size: 0.95rem;
-    font-family: 'Montserrat', sans-serif;
-    line-height: 1.5;
-    white-space: pre-line;
-    padding: 0 !important;
-    margin: 0 !important;
-}
+        .faq-answer {
+            display: none;
+            margin: 0 !important;
+            padding: 0 !important;
+            white-space: pre-line;
+            line-height: 1.5;
+        }
 
         /* Estado ABIERTO (Solo cuando se hace clic) */
         .faq-item.open .faq-question {
@@ -683,7 +680,7 @@ body.admin-mode .admin-edit-help {
     body.public-site .faq-answer {
         font-size: .85rem;
         line-height: 1.65;
-        padding-top: 0px;
+        padding-top: 12px;
     }
 
     /* CONTACTO + CALENDARIO */
@@ -1437,34 +1434,5 @@ body.admin-mode .admin-edit-help {
 
     body.public-site .carousel-item.active-center {
         transform: scale(1);
-    }
-}
-
-/* ==========================================================================
-   FAQ — ESPACIADO COMPACTO
-   ========================================================================== */
-
-.faq-item.open .faq-answer {
-    display: block;
-    margin: 2px 0 0 !important;
-    padding: 0 !important;
-    line-height: 1.5 !important;
-}
-
-@media (max-width: 768px) {
-    body.public-site .faq-item {
-        padding: 14px 0 !important;
-    }
-
-    body.public-site .faq-question {
-        margin: 0 !important;
-        padding: 0 !important;
-        line-height: 1.35 !important;
-    }
-
-    body.public-site .faq-item.open .faq-answer {
-        margin: 2px 0 0 !important;
-        padding: 0 !important;
-        line-height: 1.5 !important;
     }
 }

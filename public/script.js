@@ -1431,14 +1431,7 @@ function renderizarFaqs(listaFaqs) {
             </div>
 
             <div class="faq-answer">
-
-                ${escaparHtml(
-                    respuesta
-                ).replace(
-                    /\n/g,
-                    "<br>"
-                )}
-
+                ${escaparHtml(respuesta)}
             </div>
 
             ${
