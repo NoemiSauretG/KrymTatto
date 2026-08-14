@@ -2152,486 +2152,213 @@ function enviarCorreoCita(event) {
    CARRUSEL
 ========================================================================== */
 
-let currentIndex = 2;
-let step = 330;
+let currentIndex = 0;
+let carouselTouchStartX = 0;
+let carouselTouchStartY = 0;
+let carouselTouchEndX = 0;
+let carouselTouching = false;
 
+
+/* ==========================================================================
+   CARRUSEL — CENTRADO SEGÚN EL TAMAÑO REAL DE LA TARJETA
+========================================================================== */
 
 function cargarCarruselDestacados() {
 
-    const track =
-        document.getElementById(
-            "carouselTrack"
-        );
-
-
-    const lightbox =
-        document.getElementById(
-            "lightbox"
-        );
-
-
-    const lightboxImg =
-        document.getElementById(
-            "lightboxImg"
-        );
-
-
-    const lightboxClose =
-        document.querySelector(
-            ".lightbox-close"
-        );
-
+    const track = document.getElementById("carouselTrack");
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxClose = document.querySelector(".lightbox-close");
 
     if (!track) return;
 
-
     fetch("/api/portfolio")
         .then(response => {
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "Error en la red"
-                );
-            }
-
+            if (!response.ok) throw new Error("Error en la red");
             return response.json();
         })
         .then(tattoos => {
 
             track.innerHTML = "";
 
-
-            if (
-                !Array.isArray(tattoos) ||
-                tattoos.length === 0
-            ) {
-
+            if (!Array.isArray(tattoos) || tattoos.length === 0) {
                 track.innerHTML =
                     '<p class="error-msg">No hay trabajos destacados.</p>';
-
                 return;
             }
 
+            tattoos.forEach(tattoo => {
 
-            tattoos.forEach(
-                tattoo => {
+                const item = document.createElement("div");
+                item.className = "carousel-item";
 
-                    const item =
-                        document.createElement(
-                            "div"
-                        );
+                const image = document.createElement("img");
 
+                const clean = String(tattoo.imagen || "")
+                    .replace(/\\/g, "/");
 
-                    item.className =
-                        "carousel-item";
+                image.src = /^https?:\/\//i.test(clean)
+                    ? clean
+                    : `/${clean.replace(/^\/+/, "")}`;
 
+                image.alt = `Tatuaje ${tattoo.estilo || "Krym"}`;
 
-                    const image =
-                        document.createElement(
-                            "img"
-                        );
-
-
-                    const clean =
-                        String(
-                            tattoo.imagen || ""
-                        ).replace(
-                            /\\/g,
-                            "/"
-                        );
-
-
-                    const url =
-                        /^https?:\/\//i.test(
-                            clean
-                        )
-                            ? clean
-                            : `/${clean.replace(
-                                /^\/+/,
-                                ""
-                            )}`;
-
-
-                    image.src =
-                        url;
-
-
-                    image.alt =
-                        `Tatuaje ${
-                            tattoo.estilo ||
-                            "Krym"
-                        }`;
-
-
-                    if (
-                        lightbox &&
-                        lightboxImg
-                    ) {
-
-                        image.addEventListener(
-                            "click",
-                            () => {
-
-                                lightboxImg.src =
-                                    image.src;
-
-                                lightbox.style.display =
-                                    "flex";
-
-                                setTimeout(
-                                    () =>
-                                        lightbox.classList.add(
-                                            "active"
-                                        ),
-                                    10
-                                );
-                            }
-                        );
-                    }
-
-
-                    item.appendChild(
-                        image
-                    );
-
-
-                    track.appendChild(
-                        item
-                    );
+                if (lightbox && lightboxImg) {
+                    image.addEventListener("click", () => {
+                        lightboxImg.src = image.src;
+                        lightbox.style.display = "flex";
+                        setTimeout(() => lightbox.classList.add("active"), 10);
+                    });
                 }
-            );
 
+                item.appendChild(image);
+                track.appendChild(item);
+            });
 
             iniciarLogicaCarrusel();
         })
         .catch(error => {
-
-            console.error(
-                "Error cargando carrusel:",
-                error
-            );
-
-
+            console.error("Error cargando carrusel:", error);
             track.innerHTML =
                 '<p class="error-msg">No se pudieron cargar los trabajos.</p>';
         });
 
+    if (lightbox && lightboxClose) {
+        lightboxClose.addEventListener("click", cerrarLightbox);
 
-    if (
-        lightbox &&
-        lightboxClose
-    ) {
-
-        lightboxClose.addEventListener(
-            "click",
-            cerrarLightbox
-        );
-
-
-        lightbox.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target !==
-                        lightboxImg &&
-                    event.target !==
-                        lightboxClose
-                ) {
-
-                    cerrarLightbox();
-                }
+        lightbox.addEventListener("click", event => {
+            if (event.target !== lightboxImg && event.target !== lightboxClose) {
+                cerrarLightbox();
             }
-        );
+        });
     }
 }
 
 
 function cerrarLightbox() {
 
-    const lightbox =
-        document.getElementById(
-            "lightbox"
-        );
-
-
-    const image =
-        document.getElementById(
-            "lightboxImg"
-        );
-
+    const lightbox = document.getElementById("lightbox");
+    const image = document.getElementById("lightboxImg");
 
     if (!lightbox) return;
 
+    lightbox.classList.remove("active");
 
-    lightbox.classList.remove(
-        "active"
-    );
-
-
-    setTimeout(
-        () => {
-
-            lightbox.style.display =
-                "none";
-
-
-            if (image) {
-                image.src = "";
-            }
-        },
-        300
-    );
+    setTimeout(() => {
+        lightbox.style.display = "none";
+        if (image) image.src = "";
+    }, 300);
 }
 
 
 function iniciarLogicaCarrusel() {
 
-    const container =
-        document.getElementById(
-            "carouselContainer"
-        );
+    const container = document.getElementById("carouselContainer");
+    const track = document.getElementById("carouselTrack");
 
+    if (!container || !track) return;
 
-    const track =
-        document.getElementById(
-            "carouselTrack"
-        );
-
-
-    if (
-        !container ||
-        !track
-    ) {
-        return;
-    }
-
-
-    const items =
-        Array.from(
-            track.children
-        );
-
+    const items = Array.from(track.children);
 
     if (!items.length) return;
 
+    const nextButton = document.querySelector(".next-btn");
+    const prevButton = document.querySelector(".prev-btn");
 
-    const nextButton =
-        document.querySelector(
-            ".next-btn"
-        );
-
-
-    const prevButton =
-        document.querySelector(
-            ".prev-btn"
-        );
-
-
-    const gap = 30;
-
-    const itemWidth = 300;
-
-    step =
-        itemWidth + gap;
-
+    // Empieza por el primer tatuaje real.
+    currentIndex = Math.min(currentIndex, items.length - 1);
+    if (currentIndex < 0) currentIndex = 0;
 
     if (nextButton) {
-
-        nextButton.onclick =
-            () =>
-                moveToSlide(
-                    currentIndex + 1
-                );
+        nextButton.onclick = () => moveToSlide(currentIndex + 1);
     }
-
 
     if (prevButton) {
-
-        prevButton.onclick =
-            () =>
-                moveToSlide(
-                    currentIndex - 1
-                );
+        prevButton.onclick = () => moveToSlide(currentIndex - 1);
     }
 
-    // ============================================================
-    // SWIPE TÁCTIL EN MÓVIL
-    // ============================================================
+    // Swipe móvil.
+    container.addEventListener("touchstart", event => {
+        if (!event.touches.length) return;
 
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    let isTouchingCarousel = false;
+        carouselTouchStartX = event.touches[0].clientX;
+        carouselTouchStartY = event.touches[0].clientY;
+        carouselTouchEndX = carouselTouchStartX;
+        carouselTouching = true;
+    }, { passive: true });
 
-    container.addEventListener(
-        "touchstart",
-        event => {
+    container.addEventListener("touchmove", event => {
+        if (!carouselTouching || !event.touches.length) return;
 
-            if (!event.touches || !event.touches.length) {
-                return;
-            }
+        carouselTouchEndX = event.touches[0].clientX;
+    }, { passive: true });
 
-            touchStartX =
-                event.touches[0].clientX;
+    container.addEventListener("touchend", () => {
 
-            touchStartY =
-                event.touches[0].clientY;
+        if (!carouselTouching) return;
 
-            touchEndX =
-                touchStartX;
+        carouselTouching = false;
 
-            touchEndY =
-                touchStartY;
+        const deltaX = carouselTouchEndX - carouselTouchStartX;
+        const deltaY = 0;
 
-            isTouchingCarousel = true;
-        },
-        { passive: true }
-    );
+        if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY)) {
+            return;
+        }
 
-    container.addEventListener(
-        "touchmove",
-        event => {
+        if (deltaX < 0) {
+            moveToSlide(currentIndex + 1);
+        } else {
+            moveToSlide(currentIndex - 1);
+        }
+    }, { passive: true });
 
-            if (!isTouchingCarousel ||
-                !event.touches ||
-                !event.touches.length) {
-                return;
-            }
+    // Espera a que el navegador calcule los tamaños responsive.
+    requestAnimationFrame(() => moveToSlide(currentIndex, false));
 
-            touchEndX =
-                event.touches[0].clientX;
-
-            touchEndY =
-                event.touches[0].clientY;
-        },
-        { passive: true }
-    );
-
-    container.addEventListener(
-        "touchend",
-        () => {
-
-            if (!isTouchingCarousel) {
-                return;
-            }
-
-            isTouchingCarousel = false;
-
-            const deltaX =
-                touchEndX - touchStartX;
-
-            const deltaY =
-                touchEndY - touchStartY;
-
-            // Solo consideramos swipe horizontal.
-            if (
-                Math.abs(deltaX) < 45 ||
-                Math.abs(deltaX) < Math.abs(deltaY)
-            ) {
-                return;
-            }
-
-            if (deltaX < 0) {
-                moveToSlide(
-                    currentIndex + 1
-                );
-            } else {
-                moveToSlide(
-                    currentIndex - 1
-                );
-            }
-        },
-        { passive: true }
-    );
-
-
-    moveToSlide(
-        currentIndex,
-        false
-    );
+    window.addEventListener("resize", () => {
+        moveToSlide(currentIndex, false);
+    });
 }
 
 
-function moveToSlide(
-    index,
-    animate = true
-) {
+function moveToSlide(index, animate = true) {
 
-    const container =
-        document.getElementById(
-            "carouselContainer"
-        );
+    const container = document.getElementById("carouselContainer");
+    const track = document.getElementById("carouselTrack");
 
+    if (!track || !container) return;
 
-    const track =
-        document.getElementById(
-            "carouselTrack"
-        );
-
-
-    if (
-        !track ||
-        !container
-    ) {
-        return;
-    }
-
-
-    const items =
-        Array.from(
-            track.children
-        );
-
+    const items = Array.from(track.children);
 
     if (!items.length) return;
 
+    // Carrusel circular sin necesidad de clones.
+    if (index < 0) index = items.length - 1;
+    if (index >= items.length) index = 0;
 
-    if (index < 0) {
-        index = items.length - 1;
-    }
+    const item = items[index];
 
+    // Centrado REAL:
+    // usamos la posición y anchura que tiene la tarjeta DESPUÉS del CSS responsive.
+    const containerCenter = container.clientWidth / 2;
+    const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+    const offset = itemCenter - containerCenter;
 
-    if (index >= items.length) {
-        index = 0;
-    }
+    track.style.transition = animate
+        ? "transform .45s cubic-bezier(.22,1,.36,1)"
+        : "none";
 
+    track.style.transform = `translate3d(${-offset}px, 0, 0)`;
 
-    track.style.transition =
-        animate
-            ? "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)"
-            : "none";
+    currentIndex = index;
 
-
-    const containerWidth =
-        container.offsetWidth;
-
-
-    const offset =
-        (index * step) -
-        (containerWidth / 2) +
-        (300 / 2);
-
-
-    track.style.transform =
-        `translateX(${-offset}px)`;
-
-
-    currentIndex =
-        index;
-
-
-    items.forEach(
-        (item, itemIndex) => {
-
-            item.classList.toggle(
-                "active-center",
-                itemIndex === currentIndex
-            );
-        }
-    );
+    items.forEach((currentItem, itemIndex) => {
+        currentItem.classList.toggle(
+            "active-center",
+            itemIndex === currentIndex
+        );
+    });
 }
 
 

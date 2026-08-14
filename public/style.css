@@ -1376,3 +1376,126 @@ body.admin-mode .admin-edit-help {
         padding-top: 10px;
     }
 }
+
+
+/* ==========================================================================
+   CARRUSEL MÓVIL — CENTRADO REAL Y TAMAÑO ADAPTATIVO
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+    body.public-site .carousel-wrapper {
+        width: 100%;
+        margin: 0 auto;
+        padding: 0;
+        position: relative;
+        display: block;
+    }
+
+    body.public-site .carousel-container {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        padding: 18px 0 48px;
+        margin: 0;
+        touch-action: pan-y;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    body.public-site .carousel-track {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: max-content;
+        margin: 0;
+        padding: 0;
+        will-change: transform;
+    }
+
+    /* La tarjeta ocupa una parte razonable de la pantalla.
+       La imagen se adapta al ancho del móvil sin deformarse. */
+    body.public-site .carousel-item {
+        flex: 0 0 72vw;
+        width: 72vw;
+        max-width: 300px;
+        height: min(105vw, 405px);
+        min-height: 300px;
+        overflow: hidden;
+        margin: 0;
+        transform: scale(.88);
+        transform-origin: center center;
+        border-radius: 5px;
+        background: #0a0a0a;
+        transition:
+            transform .4s cubic-bezier(.22,1,.36,1),
+            filter .4s ease,
+            opacity .4s ease;
+    }
+
+    body.public-site .carousel-item img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+    }
+
+    body.public-site .carousel-item.active-center {
+        transform: scale(1);
+        filter: grayscale(0) brightness(1);
+        opacity: 1;
+        z-index: 2;
+        box-shadow:
+            0 18px 40px rgba(0,0,0,.55),
+            0 0 0 1px rgba(212,181,138,.16);
+    }
+
+    /* Laterales más discretos */
+    body.public-site .carousel-item:not(.active-center) {
+        filter: grayscale(65%) brightness(.48);
+        opacity: .82;
+    }
+
+    body.public-site .carousel-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        z-index: 10;
+        top: 48%;
+        transform: translateY(-50%);
+        background: rgba(5,5,5,.72);
+        border: 1px solid rgba(212,181,138,.32);
+        font-size: .95rem;
+    }
+
+    body.public-site .prev-btn { left: 7px; }
+    body.public-site .next-btn { right: 7px; }
+
+    body.public-site .carousel-wrapper::after {
+        content: "DESLIZA PARA VER MÁS";
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #777;
+        font-family: "Montserrat", sans-serif;
+        font-size: .48rem;
+        letter-spacing: 2.5px;
+        white-space: nowrap;
+        pointer-events: none;
+    }
+}
+
+@media (max-width: 380px) {
+    body.public-site .carousel-item {
+        flex-basis: 76vw;
+        width: 76vw;
+        height: 101vw;
+        min-height: 280px;
+    }
+}
