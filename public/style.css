@@ -1300,139 +1300,154 @@ body.admin-mode .admin-edit-help {
 }
 
 
-/* ==========================================================================
-   CARRUSEL MÓVIL — ENFOQUE CENTRAL CON ILUMINACIÓN Y LATERALES APAGADAS
-   ========================================================================== */
+/* ============================================================
+   CARRUSEL MÓVIL
+   Imagen central clara + imágenes laterales visibles y oscuras
+   ============================================================ */
 
-    @media (max-width: 768px) {
+@media (max-width: 768px) {
 
-        /* Wrapper contenedor del carrusel */
-        body.public-site .carousel-wrapper {
-            width: 100%;
-            margin: 0 auto;
-            padding: 0;
-            position: relative;
-            display: block;
-        }
-
-        /* Área con overflow para ocultar el scroll nativo */
-        body.public-site .carousel-container {
-            width: 100%;
-            max-width: 100%;
-            overflow: hidden;
-            padding: 24px 0 48px;
-            margin: 0;
-            touch-action: pan-y;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-
-        /* Tira deslizable de tarjetas */
-        body.public-site .carousel-track {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            width: max-content;
-            margin: 0;
-            padding: 0;
-            will-change: transform;
-        }
-
-        /* TARJETAS NO ACTIVAS (Laterales - Anterior y Siguiente):
-        Reducidas de tamaño, totalmente apagadas/oscuras y en escala de grises */
-        body.public-site .carousel-item {
-            flex: 0 0 min(72vw, 290px);
-            width: min(72vw, 290px);
-            max-width: 290px;
-            height: min(104vw, 400px);
-            min-height: 285px;
-            overflow: hidden;
-            margin: 0;
-            border-radius: 8px;
-            background: #000000;
-            
-            /* Efecto sin iluminar para los laterales */
-            transform: scale(0.82);
-            transform-origin: center center;
-            filter: grayscale(100%) brightness(0.22);
-            opacity: 0.45;
-
-            transition: 
-                transform 0.4s cubic-bezier(0.25, 1, 0.5, 1),
-                filter 0.4s ease,
-                opacity 0.4s ease,
-                box-shadow 0.4s ease;
-        }
-
-        /* Ajuste de imágenes internas */
-        body.public-site .carousel-item img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center center;
-            pointer-events: none;
-        }
-
-        /* TARJETA CENTRAL / ACTIVA:
-        Enfocada al 100%, más grande, color real e iluminación destacada */
-        body.public-site .carousel-item.active-center {
-            transform: scale(1.06);
-            filter: grayscale(0%) brightness(1.1);
-            opacity: 1;
-            z-index: 5;
-            box-shadow:
-                0 14px 38px rgba(0, 0, 0, 0.85),
-                0 0 28px rgba(212, 181, 138, 0.3),
-                0 0 0 1px rgba(212, 181, 138, 0.45);
-        }
-
-        /* Botones de navegación laterales */
-        body.public-site .carousel-btn {
-            width: 38px;
-            height: 38px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            z-index: 10;
-            position: absolute;
-            top: 46%;
-            transform: translateY(-50%);
-            background: rgba(5, 5, 5, 0.85);
-            border: 1px solid rgba(212, 181, 138, 0.4);
-            color: #d4b58a;
-            font-size: 0.95rem;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
-        }
-
-        body.public-site .prev-btn { left: 8px; }
-        body.public-site .next-btn { right: 8px; }
-
-        /* Leyenda inferior informativa */
-        body.public-site .carousel-wrapper::after {
-            content: "DESLIZA PARA VER MÁS";
-            position: absolute;
-            bottom: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #666666;
-            font-family: "Montserrat", sans-serif;
-            font-size: 0.48rem;
-            letter-spacing: 2.5px;
-            white-space: nowrap;
-            pointer-events: none;
-        }
+    body.public-site .carousel-wrapper {
+        width: 100%;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
     }
 
-@media (max-width: 380px) {
+    body.public-site .carousel-container {
+        width: 100%;
+        overflow: hidden;
+        padding: 25px 0 45px;
+        touch-action: pan-y;
+    }
+
+    body.public-site .carousel-track {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: max-content;
+        will-change: transform;
+    }
+
+    /* FOTOS LATERALES */
     body.public-site .carousel-item {
-        flex-basis: 76vw;
-        width: 76vw;
-        height: 101vw;
-        min-height: 275px;
+        flex: 0 0 68vw;
+        width: 68vw;
+        max-width: 280px;
+        height: min(100vw, 390px);
+        min-height: 280px;
+
+        overflow: hidden;
+        border-radius: 5px;
+
+        transform: scale(.78);
+        transform-origin: center center;
+
+        /* Se siguen viendo, pero más oscuras */
+        filter:
+            grayscale(45%)
+            brightness(.42)
+            contrast(.95);
+
+        opacity: .72;
+
+        transition:
+            transform .4s cubic-bezier(.22,1,.36,1),
+            filter .4s ease,
+            opacity .4s ease;
+    }
+
+    /* Imagen */
+    body.public-site .carousel-item img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        pointer-events: none;
+    }
+
+    /* FOTO CENTRAL */
+    body.public-site .carousel-item.active-center {
+        transform: scale(1);
+        filter:
+            grayscale(0%)
+            brightness(1)
+            contrast(1);
+
+        opacity: 1;
+        z-index: 5;
+
+        box-shadow:
+            0 15px 40px rgba(0,0,0,.65),
+            0 0 0 1px rgba(212,181,138,.25);
+    }
+
+    /* BOTONES */
+    body.public-site .carousel-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+
+        width: 36px;
+        height: 36px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 0;
+        border-radius: 50%;
+
+        background: rgba(5,5,5,.8);
+        border: 1px solid rgba(212,181,138,.35);
+
+        color: #d4b58a;
+        z-index: 10;
+    }
+
+    body.public-site .prev-btn {
+        left: 7px;
+    }
+
+    body.public-site .next-btn {
+        right: 7px;
+    }
+
+    /* Indicador */
+    body.public-site .carousel-wrapper::after {
+        content: "DESLIZA PARA VER MÁS";
+
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+
+        transform: translateX(-50%);
+
+        color: #666;
+        font-family: "Montserrat", sans-serif;
+        font-size: .48rem;
+        letter-spacing: 2.5px;
+
+        white-space: nowrap;
+        pointer-events: none;
+    }
+}
+
+
+/* Móviles pequeños */
+@media (max-width: 380px) {
+
+    body.public-site .carousel-item {
+        flex-basis: 70vw;
+        width: 70vw;
+        height: 94vw;
+        min-height: 270px;
+
+        transform: scale(.76);
+    }
+
+    body.public-site .carousel-item.active-center {
+        transform: scale(1);
     }
 }
