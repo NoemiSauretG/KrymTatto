@@ -508,32 +508,29 @@ app.get(
 
 
 /* ============================================================
-   CREAR PORTFOLIO
+   GUARDAR PORTFOLIO
 ============================================================ */
 
 app.post(
     "/guardarPortfolio",
-
     requireAdmin,
-
     upload.single("imagen"),
-
     async (req, res) => {
 
         try {
 
-            const {
-                estilo
-            } = req.body;
+            console.log("GUARDAR PORTFOLIO");
+            console.log("BODY:", req.body);
+            console.log("FILE:", !!req.file);
+
+
+            const { estilo } = req.body;
 
 
             if (!req.file) {
 
                 return res.status(400).json({
-
-                    error:
-                        "Falta la imagen"
-
+                    error: "Falta la imagen"
                 });
             }
 
@@ -565,17 +562,12 @@ app.post(
 
 
             res.json({
-
                 success: true,
-
-                id:
-                    result.insertId,
-
+                id: result.insertId,
                 imagen,
-
                 posicion
-
             });
+
 
         } catch (error) {
 
@@ -588,7 +580,16 @@ app.post(
             res.status(500).json({
 
                 error:
-                    "No se pudo guardar el trabajo"
+                    "Error guardando portfolio",
+
+                detalle:
+                    error.message,
+
+                code:
+                    error.code || null,
+
+                sqlMessage:
+                    error.sqlMessage || null
 
             });
         }
@@ -597,24 +598,37 @@ app.post(
 
 
 /* ============================================================
-   CREAR OFERTA
+   GUARDAR OFERTA
 ============================================================ */
 
 app.post(
     "/guardarOferta",
-
     requireAdmin,
-
     upload.single("imagen"),
-
     async (req, res) => {
 
         try {
+
+            console.log("GUARDAR OFERTA");
+            console.log("BODY:", req.body);
+            console.log("FILE:", !!req.file);
+
 
             const {
                 titulo,
                 precio
             } = req.body;
+
+
+            if (!titulo || !precio) {
+
+                return res.status(400).json({
+
+                    error:
+                        "Faltan título o precio"
+
+                });
+            }
 
 
             if (!req.file) {
@@ -668,6 +682,7 @@ app.post(
 
             });
 
+
         } catch (error) {
 
             console.error(
@@ -679,7 +694,16 @@ app.post(
             res.status(500).json({
 
                 error:
-                    "No se pudo guardar la oferta"
+                    "Error guardando oferta",
+
+                detalle:
+                    error.message,
+
+                code:
+                    error.code || null,
+
+                sqlMessage:
+                    error.sqlMessage || null
 
             });
         }
@@ -688,17 +712,19 @@ app.post(
 
 
 /* ============================================================
-   CREAR FAQ
+   GUARDAR FAQ
 ============================================================ */
 
 app.post(
     "/guardarFaq",
-
     requireAdmin,
-
     async (req, res) => {
 
         try {
+
+            console.log("GUARDAR FAQ");
+            console.log("BODY:", req.body);
+
 
             const {
                 pregunta,
@@ -706,10 +732,7 @@ app.post(
             } = req.body;
 
 
-            if (
-                !pregunta ||
-                !respuesta
-            ) {
+            if (!pregunta || !respuesta) {
 
                 return res.status(400).json({
 
@@ -750,6 +773,7 @@ app.post(
 
             });
 
+
         } catch (error) {
 
             console.error(
@@ -761,7 +785,16 @@ app.post(
             res.status(500).json({
 
                 error:
-                    "No se pudo guardar la pregunta"
+                    "Error guardando FAQ",
+
+                detalle:
+                    error.message,
+
+                code:
+                    error.code || null,
+
+                sqlMessage:
+                    error.sqlMessage || null
 
             });
         }
