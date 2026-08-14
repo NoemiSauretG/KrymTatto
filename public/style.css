@@ -177,7 +177,7 @@ body {
             font-family: 'Montserrat', sans-serif;
             line-height: 1.7;
             white-space: pre-line; /* Respeta los saltos de línea (\n) de la BD */
-            padding-top: 15px;
+            padding-top: 0px;
         }
 
         /* Estado ABIERTO (Solo cuando se hace clic) */
@@ -682,7 +682,7 @@ body.admin-mode .admin-edit-help {
     body.public-site .faq-answer {
         font-size: .85rem;
         line-height: 1.65;
-        padding-top: 12px;
+        padding-top: 0px;
     }
 
     /* CONTACTO + CALENDARIO */
