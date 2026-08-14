@@ -512,7 +512,7 @@ app.get(
 ============================================================ */
 
 app.post(
-    "/guardarPortfolio",
+    "/api/guardarPortfolio",
     requireAdmin,
     upload.single("imagen"),
     async (req, res) => {
@@ -716,7 +716,7 @@ app.post(
 ============================================================ */
 
 app.post(
-    "/guardarFaq",
+    "/api/guardarFaq",
     requireAdmin,
     async (req, res) => {
 
