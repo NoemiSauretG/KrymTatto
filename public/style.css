@@ -172,11 +172,12 @@ body {
         /* Respuesta OCULTA por defecto */
         .faq-answer {
             font-family: 'Montserrat', sans-serif !important;
+            font-size: 0.85rem !important;
+            line-height: 1.5;
             display: none;
             margin: 0 !important;
             padding: 0 !important;
             white-space: pre-line;
-            line-height: 1.5;
         }
 
         /* Estado ABIERTO (Solo cuando se hace clic) */
