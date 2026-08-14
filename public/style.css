@@ -221,15 +221,6 @@ body {
         .modal-close { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #666; }
         .modal-close:hover { color: #fff; }
 
-        @media (max-width: 992px) {
-            .navbar { padding: 15px 20px; } .menu-icon { display: block; color: white; font-size: 1.8rem; cursor: pointer; }
-            .menu { display: none; width: 100%; margin-top: 15px; background: #050505; position: absolute; top: 75px; left: 0; padding: 10px 0; border-bottom: 1px solid #111; }
-            .menu ul { flex-direction: column; } .menu a { display: block; padding: 20px; text-align: center; }
-            #menu-toggle:checked ~ .menu { display: block; }
-            .quien-soy-block, .contacto-wrapper { grid-template-columns: 1fr; flex-direction: column; gap: 40px; }
-            .carousel-btn { display: none; } .carousel-item { flex: 0 0 240px; height: 360px; }
-            section { padding: 140px 20px 40px 20px; }
-        }
 
         /* ==========================================================================
    ESTILOS GENERALES DEL FOOTER
@@ -634,27 +625,7 @@ body.admin-mode .admin-edit-help {
         flex: none;
         order: 2;
     }
-
-    /* CARRUSEL */
-    body.public-site .carousel-wrapper { margin-bottom: 0; }
-    body.public-site .carousel-container {
-        padding: 24px 0 35px;
-        overflow: hidden;
-    }
-    body.public-site .carousel-track { gap: 14px; }
-    body.public-site .carousel-item {
-        flex: 0 0 68vw;
-        max-width: 270px;
-        height: 390px;
-        transform: scale(.88);
-        filter: grayscale(45%) brightness(55%);
-    }
-    body.public-site .carousel-item.active-center {
-        transform: scale(1);
-        filter: grayscale(0%) brightness(100%);
-    }
-
-    /* PORTAFOLIO */
+/* PORTAFOLIO */
     body.public-site .filter-container {
         gap: 8px;
         margin-bottom: 20px;
@@ -1177,55 +1148,6 @@ body.admin-mode .admin-edit-help {
 
 @media (max-width: 768px) {
 
-    /* CARRUSEL MÓVIL CENTRADO */
-    body.public-site .carousel-wrapper {
-        width: 100%;
-        max-width: 100%;
-        margin: 0 auto;
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    body.public-site .carousel-container {
-        width: 100%;
-        max-width: 100%;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        padding: 24px 0 46px;
-        margin: 0 auto;
-    }
-
-    body.public-site .carousel-track {
-        width: max-content;
-        justify-content: center;
-        align-items: center;
-        gap: 12px;
-    }
-
-    body.public-site .carousel-item {
-        flex: 0 0 68vw;
-        width: 68vw;
-        max-width: 275px;
-        margin: 0;
-    }
-
-    body.public-site .carousel-btn {
-        position: absolute;
-        z-index: 5;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    body.public-site .prev-btn {
-        left: 8px;
-    }
-
-    body.public-site .next-btn {
-        right: 8px;
-    }
 
     /* Evita que los botones de edición/borrado aparezcan en la web pública */
     body.public-site .admin-card-actions,
@@ -1419,11 +1341,11 @@ body.admin-mode .admin-edit-help {
         /* TARJETAS NO ACTIVAS (Laterales - Anterior y Siguiente):
         Reducidas de tamaño, totalmente apagadas/oscuras y en escala de grises */
         body.public-site .carousel-item {
-            flex: 0 0 68vw;
-            width: 68vw;
-            max-width: 280px;
-            height: min(100vw, 390px);
-            min-height: 280px;
+            flex: 0 0 min(72vw, 290px);
+            width: min(72vw, 290px);
+            max-width: 290px;
+            height: min(104vw, 400px);
+            min-height: 285px;
             overflow: hidden;
             margin: 0;
             border-radius: 8px;
@@ -1511,6 +1433,6 @@ body.admin-mode .admin-edit-help {
         flex-basis: 76vw;
         width: 76vw;
         height: 101vw;
-        min-height: 280px;
+        min-height: 275px;
     }
 }
