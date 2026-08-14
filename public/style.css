@@ -171,6 +171,7 @@ body {
 
         /* Respuesta OCULTA por defecto */
         .faq-answer {
+            font-family: 'Montserrat', sans-serif !important;
             display: none;
             margin: 0 !important;
             padding: 0 !important;
