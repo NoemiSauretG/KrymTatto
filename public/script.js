@@ -655,7 +655,7 @@ function savePortfolioItem(event) {
 
 
     adminFetch(
-        "/guardarPortfolio",
+        "/api/guardarPortfolio",
         {
             method: "POST",
             body: formData
@@ -936,7 +936,7 @@ function saveOfertaItem() {
 
 
     adminFetch(
-        "/guardarOferta",
+        "/api/guardarOferta",
         {
             method: "POST",
             body: formData
@@ -1554,7 +1554,7 @@ function saveFaqItem() {
 
 
     adminFetch(
-        "/guardarFaq",
+        "/api/guardarFaq",
         {
             method: "POST",
 
