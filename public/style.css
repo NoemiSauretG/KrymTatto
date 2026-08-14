@@ -1173,3 +1173,206 @@ body.admin-mode .admin-edit-help {
         pointer-events: none;
     }
 }
+
+
+@media (max-width: 768px) {
+
+    /* CARRUSEL MÓVIL CENTRADO */
+    body.public-site .carousel-wrapper {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    body.public-site .carousel-container {
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        padding: 24px 0 46px;
+        margin: 0 auto;
+    }
+
+    body.public-site .carousel-track {
+        width: max-content;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+    }
+
+    body.public-site .carousel-item {
+        flex: 0 0 68vw;
+        width: 68vw;
+        max-width: 275px;
+        margin: 0;
+    }
+
+    body.public-site .carousel-btn {
+        position: absolute;
+        z-index: 5;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    body.public-site .prev-btn {
+        left: 8px;
+    }
+
+    body.public-site .next-btn {
+        right: 8px;
+    }
+
+    /* Evita que los botones de edición/borrado aparezcan en la web pública */
+    body.public-site .admin-card-actions,
+    body.public-site .admin-edit-help,
+    body.public-site .btn-admin-action,
+    body.public-site .btn-eliminar,
+    body.public-site .btn-borrar,
+    body.public-site .btn-editar,
+    body.public-site [data-admin-action],
+    body.public-site [onclick*="eliminar"],
+    body.public-site [onclick*="Eliminar"],
+    body.public-site [onclick*="borrar"],
+    body.public-site [onclick*="Borrar"],
+    body.public-site [onclick*="editar"],
+    body.public-site [onclick*="Editar"] {
+        display: none !important;
+    }
+}
+
+
+/* ==========================================================================
+   MOBILE — QUIÉN SOY: MÁS COMPACTO, SIN BORDE Y UNIDO AL CARRUSEL
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+    body.public-site .quien-soy-block {
+        position: relative;
+        width: 100%;
+        height: 56vh;
+        min-height: 390px;
+        max-height: 500px;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        border: none !important;
+        border-radius: 0 !important;
+        background: #050505;
+        isolation: isolate;
+    }
+
+    /* Foto */
+    body.public-site .quien-soy-foto {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        z-index: -2;
+        opacity: 1;
+        border: none !important;
+    }
+
+    body.public-site .quien-soy-foto img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 25%;
+        filter: grayscale(12%) contrast(1.05) brightness(.72);
+        transform: scale(1.02);
+    }
+
+    /* Degradado empieza más abajo y se prolonga hacia el carrusel */
+    body.public-site .quien-soy-foto::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(
+                to bottom,
+                rgba(0,0,0,.02) 35%,
+                rgba(0,0,0,.08) 48%,
+                rgba(0,0,0,.32) 64%,
+                rgba(0,0,0,.72) 82%,
+                #050505 100%
+            );
+        z-index: 1;
+    }
+
+    /* Texto abajo a la izquierda */
+    body.public-site .quien-soy-texto {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        z-index: 3;
+        width: 100%;
+        margin: 0;
+        padding: 70px 24px 24px;
+        background:
+            linear-gradient(
+                to bottom,
+                transparent 0%,
+                rgba(5,5,5,.04) 20%,
+                rgba(5,5,5,.70) 75%,
+                rgba(5,5,5,.96) 100%
+            );
+        text-align: left;
+    }
+
+    body.public-site .quien-soy-texto::before {
+        content: "";
+        display: block;
+        width: 38px;
+        height: 2px;
+        margin: 0 0 12px;
+        background: #d4b58a;
+    }
+
+    body.public-site .quien-soy-texto::after {
+        content: "KRYM TATTOO · SOBRE MÍ";
+        position: absolute;
+        top: 27px;
+        left: 24px;
+        color: #d4b58a;
+        font-family: "Montserrat", sans-serif;
+        font-size: .48rem;
+        letter-spacing: 2.8px;
+        opacity: .9;
+    }
+
+    body.public-site .quien-soy-texto h1 {
+        margin: 0 0 8px;
+        font-family: "Cinzel", serif;
+        font-size: clamp(1.45rem, 7vw, 2rem);
+        font-weight: 500;
+        letter-spacing: 1px;
+        line-height: 1.1;
+        color: #fff;
+    }
+
+    body.public-site .quien-soy-texto p {
+        max-width: 320px;
+        margin: 0;
+        color: #d0d0d0;
+        font-size: .76rem;
+        line-height: 1.6;
+        text-shadow: 0 2px 12px rgba(0,0,0,.9);
+    }
+
+    /* El carrusel queda pegado visualmente a la sección */
+    body.public-site .carousel-wrapper {
+        margin-top: -2px;
+        padding-top: 0;
+        background: #050505;
+    }
+
+    body.public-site .carousel-container {
+        padding-top: 10px;
+    }
+}
