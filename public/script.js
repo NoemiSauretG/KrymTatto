@@ -527,34 +527,35 @@ function eliminarFaq(id) {
 function appendFotoHtml(item) {
 
     const grid =
-        document.getElementById(
-            "portfolioGrid"
-        );
+        document.getElementById("portfolioGrid");
 
     if (!grid) return;
 
 
+    // ============================================================
+    // TARJETA
+    // ============================================================
+
     const card =
         document.createElement("div");
-
 
     card.className =
         "portfolio-card admin-draggable";
 
-
     card.dataset.id =
         item.id;
-
 
     card.dataset.category =
         item.estilo || "";
 
 
-    const cleanSrc =
-        String(
-            item.imagen || ""
-        ).replace(/\\/g, "/");
+    // ============================================================
+    // URL DE LA IMAGEN
+    // ============================================================
 
+    const cleanSrc =
+        String(item.imagen || "")
+            .replace(/\\/g, "/");
 
     const imageSrc =
         /^https?:\/\//i.test(cleanSrc)
@@ -562,13 +563,19 @@ function appendFotoHtml(item) {
             : `/${cleanSrc.replace(/^\/+/, "")}`;
 
 
+    // ============================================================
+    // HTML DE LA TARJETA
+    // ============================================================
+
     card.innerHTML = `
 
         <img
+            class="portfolio-img"
             src="${escaparHtml(imageSrc)}"
             alt="Trabajo de ${escaparHtml(
                 item.estilo || "tatuaje"
             )}"
+            loading="lazy"
         >
 
         ${
@@ -597,6 +604,68 @@ function appendFotoHtml(item) {
     `;
 
 
+    // ============================================================
+    // LIGHTBOX / AUMENTAR IMAGEN
+    // ============================================================
+
+    const image =
+        card.querySelector(".portfolio-img");
+
+    const lightbox =
+        document.getElementById("lightbox");
+
+    const lightboxImg =
+        document.getElementById("lightboxImg");
+
+
+    if (
+        image &&
+        lightbox &&
+        lightboxImg
+    ) {
+
+        image.style.cursor =
+            "zoom-in";
+
+
+        image.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
+
+
+                lightboxImg.src =
+                    image.src;
+
+
+                lightboxImg.alt =
+                    image.alt;
+
+
+                lightbox.style.display =
+                    "flex";
+
+
+                setTimeout(
+                    () => {
+
+                        lightbox.classList.add(
+                            "active"
+                        );
+
+                    },
+                    10
+                );
+            }
+        );
+    }
+
+
+    // ============================================================
+    // BOTÓN ELIMINAR
+    // ============================================================
+
     if (isLogged) {
 
         const deleteButton =
@@ -611,7 +680,10 @@ function appendFotoHtml(item) {
                 "click",
                 event => {
 
+                    event.preventDefault();
+
                     event.stopPropagation();
+
 
                     eliminarPortfolio(
                         item.id
@@ -621,6 +693,10 @@ function appendFotoHtml(item) {
         }
 
 
+        // ========================================================
+        // DRAG & DROP
+        // ========================================================
+
         activarDrag(
             card,
             "portfolioGrid",
@@ -628,6 +704,10 @@ function appendFotoHtml(item) {
         );
     }
 
+
+    // ============================================================
+    // AÑADIR AL GRID
+    // ============================================================
 
     grid.appendChild(card);
 }
