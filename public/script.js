@@ -1,711 +1,2524 @@
 /* ==========================================================================
-    ESTADO GLOBAL Y AUTENTICACIÓN
+   ESTADO GLOBAL Y AUTENTICACIÓN
 ========================================================================== */
-let isLogged = localStorage.getItem('adminKrym') === 'true';
 
-function controlLoginGlobal() {
-    if (isLogged) {
-        localStorage.removeItem('adminKrym');
-        isLogged = false;
-        document.body.classList.remove('admin-mode');
+let adminToken = localStorage.getItem("adminKrymToken") || "";
+let isLogged = !!adminToken;
 
-        if (document.getElementById('adminHollidayHelper')) {
-            document.getElementById('adminHollidayHelper').style.display = 'none';
-        }
+async function adminFetch(url, options = {}) {
+    const headers = new Headers(options.headers || {});
 
-        actualizarBotonNav();
-        alert('Sesión de administrador cerrada.');
-        window.location.reload();
-    } else {
-        let p = prompt('Introduce la clave de acceso de administrador:');
-        if (!p) return;
-
-        fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: p })
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    localStorage.setItem('adminKrym', 'true');
-                    isLogged = true;
-                    document.body.classList.add('admin-mode');
-                    actualizarBotonNav();
-                    alert('¡Acceso concedido! Las opciones de edición han sido desbloqueadas.');
-                } else {
-                    alert('Clave incorrecta.');
-                }
-            })
-            .catch(() => {
-                alert('Error al intentar conectar con el servidor de autenticación.');
-            });
+    if (adminToken) {
+        headers.set("Authorization", `Bearer ${adminToken}`);
     }
+
+    return fetch(url, {
+        ...options,
+        headers
+    });
 }
 
-function actualizarBotonNav() {
-    const btn = document.getElementById('btnStatusLogin');
-    if (btn) {
-        btn.textContent = isLogged ? "Cerrar Panel" : "Iniciar Sesión";
-        btn.style.color = isLogged ? "#d4b58a" : "#fff";
+function controlLoginGlobal() {
+
+    if (isLogged) {
+
+        localStorage.removeItem("adminKrymToken");
+        localStorage.removeItem("adminKrym");
+
+        adminToken = "";
+        isLogged = false;
+
+        document.body.classList.remove("admin-mode");
+
+        actualizarBotonNav();
+
+        alert("Sesión de administrador cerrada.");
+
+        window.location.reload();
+
+        return;
     }
+
+    const password = prompt(
+        "Introduce la clave de acceso de administrador:"
+    );
+
+    if (!password) return;
+
+    fetch("/api/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            password
+        })
+    })
+        .then(async response => {
+
+            const data =
+                await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message ||
+                    data.error ||
+                    "Clave incorrecta."
+                );
+            }
+
+            return data;
+        })
+        .then(data => {
+
+            if (!data.success || !data.token) {
+                throw new Error(
+                    "El servidor no devolvió un token válido."
+                );
+            }
+
+            adminToken = data.token;
+
+            localStorage.setItem(
+                "adminKrymToken",
+                adminToken
+            );
+
+            localStorage.setItem(
+                "adminKrym",
+                "true"
+            );
+
+            isLogged = true;
+
+            document.body.classList.add(
+                "admin-mode"
+            );
+
+            actualizarBotonNav();
+
+            alert(
+                "¡Acceso concedido! Ahora puedes añadir, borrar y mover contenido."
+            );
+
+            window.location.reload();
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            alert(
+                error.message ||
+                "Error al conectar con el servidor."
+            );
+        });
+}
+
+
+function actualizarBotonNav() {
+
+    const button =
+        document.getElementById("btnStatusLogin");
+
+    if (!button) return;
+
+    button.textContent =
+        isLogged
+            ? "Cerrar Panel"
+            : "Iniciar Sesión";
+
+    button.style.color =
+        isLogged
+            ? "#d4b58a"
+            : "#fff";
+}
+
+
+function escaparHtml(valor) {
+
+    return String(valor ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
 /* ==========================================================================
-    NAVEGACIÓN Y MODALES
+   NAVEGACIÓN
 ========================================================================== */
-function navegarA(id) {
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active-section'));
-    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
-    const targetSection = document.getElementById(id);
-    if (targetSection) {
-        targetSection.classList.add('active-section');
+function navegarA(id) {
+
+    document
+        .querySelectorAll("section")
+        .forEach(section => {
+            section.classList.remove(
+                "active-section"
+            );
+        });
+
+    document
+        .querySelectorAll(".nav-link")
+        .forEach(link => {
+            link.classList.remove("active");
+        });
+
+
+    const section =
+        document.getElementById(id);
+
+    if (section) {
+        section.classList.add(
+            "active-section"
+        );
     }
 
-    document.querySelectorAll('.nav-link').forEach(link => {
-        if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(`'${id}'`)) {
-            link.classList.add('active');
-        }
-    });
 
-    const toggle = document.getElementById('menu-toggle');
+    document
+        .querySelectorAll(".nav-link")
+        .forEach(link => {
+
+            const onclick =
+                link.getAttribute("onclick") || "";
+
+            if (
+                onclick.includes(
+                    `'${id}'`
+                )
+            ) {
+                link.classList.add("active");
+            }
+
+        });
+
+
+    const toggle =
+        document.getElementById("menu-toggle");
+
     if (toggle) {
         toggle.checked = false;
     }
 
+
     window.scrollTo(0, 0);
 
-    if (id === 'contacto') {
+
+    if (id === "contacto") {
         renderCalendar();
     }
 
-    if (id === 'inicio') {
+
+    if (id === "inicio") {
+
         try {
-            moveToSlide(currentIndex, false);
-        } catch (err) {}
+            moveToSlide(
+                currentIndex,
+                false
+            );
+        } catch (error) {}
     }
 }
+
 
 function abrirModal(id) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'flex';
+
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+        element.style.display = "flex";
+    }
 }
+
 
 function cerrarModal(id) {
-    const el = document.getElementById(id);
-    if (el) el.style.display = 'none';
+
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+        element.style.display = "none";
+    }
 }
 
 
 /* ==========================================================================
-    PORTFOLIO (DOM Y GUARDADO)
+   DRAG & DROP
 ========================================================================== */
-function appendFotoHtml(src, cat) {
-    const grid = document.getElementById('portfolioGrid');
-    if (!grid) return;
 
-    const card = document.createElement('div');
-    card.className = 'portfolio-card';
-    card.setAttribute('data-category', cat);
+function activarDrag(
+    card,
+    containerId,
+    endpoint
+) {
 
-    const cleanSrc = String(src || '').replace(/\\/g, '/');
-    const imageSrc = /^https?:\/\//i.test(cleanSrc)
-        ? cleanSrc
-        : `/${cleanSrc.replace(/^\/+/, '')}`;
+    if (!isLogged) return;
 
-    card.innerHTML = `<img src="${imageSrc}" alt="Trabajo de ${cat}">`;
-    grid.insertBefore(card, grid.firstChild);
-}
+    card.draggable = true;
 
-function savePortfolioItem(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
 
-    fetch('/guardarPortfolio', {
-        method: 'POST',
-        body: formData // Envía tanto el archivo como los campos de texto
-    })
-    .then(res => {
-        if (!res.ok) throw new Error();
-        return res.text();
-    })
-    .then(msg => {
-        alert(msg);
-        cerrarModal('modalPortfolio');
-        e.target.reset();
-        window.location.reload();
-    })
-    .catch(() => {
-        alert('Error al subir la imagen.');
-    });
-}
+    card.addEventListener(
+        "dragstart",
+        event => {
 
-function cargarPortfolioDesdeBD() {
-    const grid = document.getElementById('portfolioGrid');
-    const filterContainer = document.getElementById('filterContainer');
-    if (!grid) return;
+            card.classList.add(
+                "dragging"
+            );
 
-    fetch('/api/portfolio')
-        .then(res => {
-            if (!res.ok) throw new Error("No se pudo conectar con la BD");
-            return res.json();
-        })
-        .then(data => {
-            grid.innerHTML = '';
+            event.dataTransfer.effectAllowed =
+                "move";
 
-            if (!Array.isArray(data) || data.length === 0) {
-                grid.innerHTML = '<p style="color: #fff; grid-column: 1/-1; text-align: center;">No hay trabajos disponibles.</p>';
-                return;
-            }
+            event.dataTransfer.setData(
+                "text/plain",
+                card.dataset.id
+            );
+        }
+    );
 
-            const estilosUnicos = new Set();
 
-            data.forEach(item => {
-                appendFotoHtml(item.imagen, item.estilo);
-                if (item.estilo) {
-                    estilosUnicos.add(item.estilo.trim());
+    card.addEventListener(
+        "dragend",
+        async () => {
+
+            card.classList.remove(
+                "dragging"
+            );
+
+
+            const container =
+                document.getElementById(
+                    containerId
+                );
+
+            if (!container) return;
+
+
+            const orden =
+                Array.from(
+                    container.querySelectorAll(
+                        "[data-id]"
+                    )
+                )
+                .map(element =>
+                    Number(element.dataset.id)
+                )
+                .filter(id =>
+                    Number.isInteger(id)
+                );
+
+
+            if (!orden.length) return;
+
+
+            try {
+
+                const response =
+                    await adminFetch(
+                        endpoint,
+                        {
+                            method: "PUT",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                orden
+                            })
+                        }
+                    );
+
+
+                const data =
+                    await response
+                        .json()
+                        .catch(() => ({}));
+
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error ||
+                        "No se pudo guardar el orden."
+                    );
                 }
-            });
 
-            if (filterContainer) {
-                filterContainer.innerHTML = '<button class="filter-btn active" onclick="filtrarEstilo(\'all\', this)">Todos</button>';
 
-                estilosUnicos.forEach(estilo => {
-                    const boton = document.createElement('button');
-                    boton.className = 'filter-btn';
-                    boton.textContent = estilo.charAt(0).toUpperCase() + estilo.slice(1);
-                    boton.onclick = function () {
-                        filtrarEstilo(estilo, this);
-                    };
-                    filterContainer.appendChild(boton);
-                });
+                console.log(
+                    "Orden guardado:",
+                    orden
+                );
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    error.message ||
+                    "No se pudo guardar el nuevo orden."
+                );
+
+                window.location.reload();
             }
-        })
-        .catch(err => {
-            console.error("Error cargando el portfolio:", err);
-            grid.innerHTML = '<p style="color: #fff; grid-column: 1/-1; text-align: center;">No se pudo cargar el portafolio.</p>';
-        });
-}
-
-function filtrarEstilo(filterValue, button) {
-    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-    button.classList.add('active');
-
-    document.querySelectorAll('.portfolio-card').forEach(card => {
-        if (filterValue === 'all' || card.getAttribute('data-category') === filterValue) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
         }
-    });
-}
+    );
 
 
-/* ==========================================================================
-    OFERTAS (DOM Y GUARDADO)
-========================================================================== */
-function saveOfertaItem() {
-    const t = document.getElementById('ofTitle').value;
-    const p = document.getElementById('ofPrice').value;
-    const f = document.getElementById('ofFile').files[0];
+    card.addEventListener(
+        "dragover",
+        event => {
 
-    if (!t || !p || !f) {
-        return alert('Completa todos los campos.');
-    }
+            event.preventDefault();
 
-    const formData = new FormData();
-    formData.append('titulo', t);
-    formData.append('precio', p);
-    formData.append('imagen', f);
 
-    fetch('/guardarOferta', {
-        method: 'POST',
-        body: formData
-    })
-        .then(res => {
-            if (!res.ok) throw new Error();
-            return res.text();
-        })
-        .then(msg => {
-            alert(msg);
-            cerrarModal('modalOfertas');
-            window.location.reload();
-        })
-        .catch(() => {
-            alert('Error al guardar la oferta.');
-        });
-}
+            const dragging =
+                document.querySelector(
+                    ".dragging"
+                );
 
-function cargarOfertasDesdeServidor() {
-    const ofertasContainer = document.getElementById('ofertasContainer');
-    if (!ofertasContainer) return;
 
-    fetch('/api/ofertas')
-        .then(response => {
-            if (!response.ok) throw new Error('Error al conectar con la API de ofertas');
-            return response.json();
-        })
-        .then(ofertas => {
-            ofertasContainer.innerHTML = '';
-
-            if (!Array.isArray(ofertas) || ofertas.length === 0) {
-                ofertasContainer.innerHTML = '<p class="error-msg" style="grid-column: 1/-1; text-align: center;">No hay ofertas disponibles en este momento.</p>';
+            if (
+                !dragging ||
+                dragging === card
+            ) {
                 return;
             }
 
-            ofertas.forEach(oferta => {
-                const card = document.createElement('div');
-                card.className = 'flash-card';
 
-                const rutaLimpia = String(oferta.imagen || '').replace(/\\/g, '/');
-                const imagenUrl = /^https?:\/\//i.test(rutaLimpia)
-                    ? rutaLimpia
-                    : `/${rutaLimpia.replace(/^\/+/, '')}`;
+            const rectangle =
+                card.getBoundingClientRect();
 
-                card.innerHTML = `
-                    <img src="${imagenUrl}" class="flash-img" alt="${oferta.titulo}">
-                    <div class="flash-info">
-                        <span class="flash-tag">Disponible</span>
-                        <h3 class="flash-title">${oferta.titulo}</h3>
-                        <div class="flash-price">${oferta.precio}€</div>
-                        <button class="btn-principal" onclick="navegarA('contacto')">Reservar</button>
-                    </div>
-                `;
 
-                const imgElement = card.querySelector('.flash-img');
-                imgElement.style.cursor = 'zoom-in';
-                imgElement.addEventListener('click', () => {
-                    const lightbox = document.getElementById('lightbox');
-                    const lightboxImg = document.getElementById('lightboxImg');
-                    if (lightbox && lightboxImg) {
-                        lightboxImg.src = imagenUrl;
-                        lightbox.style.display = 'flex';
-                        setTimeout(() => lightbox.classList.add('active'), 10);
-                    }
-                });
+            const antes =
+                event.clientY <
+                rectangle.top +
+                rectangle.height / 2;
 
-                ofertasContainer.appendChild(card);
-            });
-        })
-        .catch(err => {
-            console.error('Error al renderizar ofertas:', err);
-            ofertasContainer.innerHTML = '<p class="error-msg" style="grid-column: 1/-1; text-align: center;">No se pudieron cargar las ofertas.</p>';
-        });
+
+            const container =
+                document.getElementById(
+                    containerId
+                );
+
+
+            if (!container) return;
+
+
+            if (antes) {
+
+                container.insertBefore(
+                    dragging,
+                    card
+                );
+
+            } else {
+
+                container.insertBefore(
+                    dragging,
+                    card.nextSibling
+                );
+            }
+        }
+    );
 }
 
 
 /* ==========================================================================
-    FAQ (DESDE RAILWAY / MYSQL)
+   BORRAR
 ========================================================================== */
-let todasLasPreguntas = [];
 
-async function cargarFaqsDesdeServidor() {
-    const faqList = document.getElementById('faqList');
-    if (!faqList) return;
+async function eliminarElemento(
+    endpoint,
+    id,
+    mensaje
+) {
 
-    try {
-        const response = await fetch('/api/faq', {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
+    if (!isLogged || !adminToken) {
 
-        if (!response.ok) {
-            throw new Error(`Error HTTP ${response.status}`);
-        }
+        alert(
+            "Debes iniciar sesión como administrador."
+        );
 
-        const faqs = await response.json();
-        todasLasPreguntas = Array.isArray(faqs) ? faqs : [];
-        renderizarFaqs(todasLasPreguntas);
-
-    } catch (err) {
-        console.error('Error al renderizar las FAQs:', err);
-        faqList.innerHTML = '<p class="error-msg" style="text-align: center; color:#ff6b6b;">No se pudieron cargar las preguntas frecuentes.</p>';
-    }
-}
-
-function renderizarFaqs(listaFaqs) {
-    const faqList = document.getElementById('faqList');
-    if (!faqList) return;
-
-    faqList.innerHTML = '';
-
-    if (!Array.isArray(listaFaqs) || listaFaqs.length === 0) {
-        faqList.innerHTML = '<p class="error-msg" style="text-align: center; color: #888;">No se encontraron preguntas.</p>';
         return;
     }
 
-    listaFaqs.forEach(faq => {
-        const faqItem = document.createElement('div');
-        faqItem.className = 'faq-item';
 
-        const pregunta = String(faq.pregunta ?? '');
-        const respuesta = String(faq.respuesta ?? '').replace(/\n/g, '<br>');
-
-        faqItem.innerHTML = `
-            <div class="faq-question">
-                ${pregunta}
-                <span>+</span>
-            </div>
-            <div class="faq-answer">
-                ${respuesta}
-            </div>
-        `;
-
-        faqItem.querySelector('.faq-question').addEventListener('click', () => {
-            faqItem.classList.toggle('open');
-        });
-
-        faqList.appendChild(faqItem);
-    });
-}
-
-function buscarPreguntas() {
-    const input = document.getElementById('faqSearch');
-    if (!input) return;
-
-    const query = input.value.toLowerCase().trim();
-
-    const faqsFiltradas = todasLasPreguntas.filter(faq => {
-        const pregunta = String(faq.pregunta ?? '').toLowerCase();
-        const respuesta = String(faq.respuesta ?? '').toLowerCase();
-        return pregunta.includes(query) || respuesta.includes(query);
-    });
-
-    renderizarFaqs(faqsFiltradas);
-}
-
-function saveFaqItem() {
-    const q = document.getElementById('faqQ').value;
-    const a = document.getElementById('faqA').value;
-
-    if (!q || !a) {
-        return alert('Completa todos los campos.');
+    if (!confirm(mensaje)) {
+        return;
     }
 
-    fetch('/guardarFaq', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pregunta: q, respuesta: a })
-    })
-        .then(res => {
-            if (!res.ok) throw new Error();
-            return res.text();
-        })
-        .then(msg => {
-            alert(msg);
-            cerrarModal('modalFaq');
-            window.location.reload();
-        })
-        .catch(() => {
-            alert('Error al guardar la duda en el servidor.');
-        });
-}
+
+    try {
+
+        const response =
+            await adminFetch(
+                `${endpoint}/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
 
 
-/* ==========================================================================
-    CALENDARIO Y FORMULARIO DE RESERVA
-========================================================================== */
-let currentYear = 2026;
-let currentMonth = 6;
-let festivos = [];
+        const data =
+            await response
+                .json()
+                .catch(() => ({}));
 
-try {
-    festivos = JSON.parse(localStorage.getItem('kFestivos') || '[]');
-} catch (e) {}
 
-let modoGestionFestivos = false;
-const mesesNombres = [
-    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-];
+        if (!response.ok) {
 
-function activarModoGestionFestivos() {
-    modoGestionFestivos = !modoGestionFestivos;
-    const helper = document.getElementById('adminHollidayHelper');
-    if (helper) {
-        helper.style.display = modoGestionFestivos ? 'block' : 'none';
-    }
-    alert(modoGestionFestivos ? 'Modo de gestión de festivos activado.' : 'Modo gestión cerrado.');
-}
-
-function renderCalendar() {
-    const grid = document.getElementById('calendarGrid');
-    if (!grid) return;
-
-    const title = document.getElementById('calendarMonthTitle');
-    if (title) {
-        title.textContent = `${mesesNombres[currentMonth]} ${currentYear}`;
-    }
-
-    grid.innerHTML = '';
-    const diasSemana = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
-    diasSemana.forEach(d => {
-        const box = document.createElement('div');
-        box.className = 'calendar-day-name';
-        box.textContent = d;
-        grid.appendChild(box);
-    });
-
-    let primerDia = new Date(currentYear, currentMonth, 1).getDay();
-    primerDia = primerDia === 0 ? 6 : primerDia - 1;
-    const totalDias = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    for (let i = 0; i < primerDia; i++) {
-        const em = document.createElement('div');
-        em.className = 'calendar-day empty';
-        grid.appendChild(em);
-    }
-
-    for (let d = 1; d <= totalDias; d++) {
-        const dayBox = document.createElement('div');
-        dayBox.className = 'calendar-day';
-        dayBox.textContent = d;
-
-        const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-
-        if (festivos.includes(dateString)) {
-            dayBox.classList.add('festivo');
+            throw new Error(
+                data.error ||
+                "No se pudo eliminar."
+            );
         }
 
-        dayBox.addEventListener('click', () => {
-            if (modoGestionFestivos) {
-                if (festivos.includes(dateString)) {
-                    festivos = festivos.filter(f => f !== dateString);
-                } else {
-                    festivos.push(dateString);
-                }
-                localStorage.setItem('kFestivos', JSON.stringify(festivos));
-                renderCalendar();
-            } else {
-                if (festivos.includes(dateString)) {
-                    return alert('Este día es festivo/no laborable.');
-                }
 
-                document.querySelectorAll('.calendar-day').forEach(cd => cd.classList.remove('selected'));
-                dayBox.classList.add('selected');
+        window.location.reload();
 
-                const inputDate = document.getElementById('selectedDateInput');
-                if (inputDate) inputDate.value = dateString;
+    } catch (error) {
 
-                const display = document.getElementById('formDateDisplay');
-                if (display) {
-                    display.value = `Día seleccionado: ${d} de ${mesesNombres[currentMonth]}`;
-                }
-            }
-        });
+        console.error(error);
 
-        grid.appendChild(dayBox);
+        alert(
+            error.message ||
+            "No se pudo eliminar."
+        );
     }
 }
 
-function cambiarMes(dir) {
-    currentMonth += dir;
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
-    renderCalendar();
+
+function eliminarPortfolio(id) {
+
+    eliminarElemento(
+        "/api/portfolio",
+        id,
+        "¿Seguro que quieres eliminar este trabajo?"
+    );
 }
 
-function enviarCorreoCita(e) {
-    e.preventDefault();
-    const fileInput = document.getElementById('formFoto');
-    const fotoArchivo = fileInput && fileInput.files ? fileInput.files[0] : null;
 
-    const formData = new FormData();
-    formData.append('nombre', document.getElementById('formName').value);
-    formData.append('email', document.getElementById('formEmail').value);
-    formData.append('idea', document.getElementById('formIdea').value);
+function eliminarOferta(id) {
 
-    if (fotoArchivo) {
-        formData.append('imagen', fotoArchivo);
-    }
+    eliminarElemento(
+        "/api/ofertas",
+        id,
+        "¿Seguro que quieres eliminar esta oferta?"
+    );
+}
 
-    fetch('/api/citas-correo', {
-        method: 'POST',
-        body: formData
-    })
-        .then(res => {
-            if (!res.ok) throw new Error('Error en el servidor al procesar el correo');
-            return res.json();
-        })
-        .then(() => {
-            alert('¡Tu propuesta de diseño ha sido enviada con éxito! Nos pondremos en contacto contigo pronto.');
-            document.getElementById('appointmentForm').reset();
-        })
-        .catch(err => {
-            console.error("Error en el envío:", err);
-            alert('Hubo un inconveniente al enviar tu idea. Por favor, inténtalo de nuevo.');
-        });
+
+function eliminarFaq(id) {
+
+    eliminarElemento(
+        "/api/faq",
+        id,
+        "¿Seguro que quieres eliminar esta pregunta?"
+    );
 }
 
 
 /* ==========================================================================
-    CARRUSEL PRINCIPAL
+   PORTFOLIO
 ========================================================================== */
-let currentIndex = 2;
-let step = 330;
 
-function cargarCarruselDestacados() {
-    const track = document.getElementById('carouselTrack');
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
-    const lightboxClose = document.querySelector('.lightbox-close');
+function appendFotoHtml(item) {
 
-    if (!track) return;
+    const grid =
+        document.getElementById(
+            "portfolioGrid"
+        );
 
-    fetch('/api/portfolio')
+    if (!grid) return;
+
+
+    const card =
+        document.createElement("div");
+
+
+    card.className =
+        "portfolio-card admin-draggable";
+
+
+    card.dataset.id =
+        item.id;
+
+
+    card.dataset.category =
+        item.estilo || "";
+
+
+    const cleanSrc =
+        String(
+            item.imagen || ""
+        ).replace(/\\/g, "/");
+
+
+    const imageSrc =
+        /^https?:\/\//i.test(cleanSrc)
+            ? cleanSrc
+            : `/${cleanSrc.replace(/^\/+/, "")}`;
+
+
+    card.innerHTML = `
+
+        <img
+            src="${escaparHtml(imageSrc)}"
+            alt="Trabajo de ${escaparHtml(
+                item.estilo || "tatuaje"
+            )}"
+        >
+
+        ${
+            isLogged
+                ? `
+                    <div class="admin-card-actions">
+
+                        <span
+                            class="drag-handle"
+                            title="Arrastrar para mover">
+                            ☷
+                        </span>
+
+                        <button
+                            type="button"
+                            class="admin-delete-btn"
+                            title="Eliminar">
+                            🗑
+                        </button>
+
+                    </div>
+                `
+                : ""
+        }
+
+    `;
+
+
+    if (isLogged) {
+
+        const deleteButton =
+            card.querySelector(
+                ".admin-delete-btn"
+            );
+
+
+        if (deleteButton) {
+
+            deleteButton.addEventListener(
+                "click",
+                event => {
+
+                    event.stopPropagation();
+
+                    eliminarPortfolio(
+                        item.id
+                    );
+                }
+            );
+        }
+
+
+        activarDrag(
+            card,
+            "portfolioGrid",
+            "/api/portfolio/reordenar"
+        );
+    }
+
+
+    grid.appendChild(card);
+}
+
+
+function savePortfolioItem(event) {
+
+    event.preventDefault();
+
+
+    if (!isLogged || !adminToken) {
+
+        alert(
+            "Debes iniciar sesión como administrador."
+        );
+
+        return;
+    }
+
+
+    const formData =
+        new FormData(
+            event.target
+        );
+
+
+    adminFetch(
+        "/guardarPortfolio",
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+        .then(async response => {
+
+            const text =
+                await response.text();
+
+            if (!response.ok) {
+                throw new Error(
+                    text ||
+                    "Error al subir la imagen."
+                );
+            }
+
+            return text;
+        })
+        .then(message => {
+
+            alert(message);
+
+            cerrarModal(
+                "modalPortfolio"
+            );
+
+            event.target.reset();
+
+            window.location.reload();
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            alert(
+                error.message ||
+                "Error al subir la imagen."
+            );
+        });
+}
+
+
+function cargarPortfolioDesdeBD() {
+
+    const grid =
+        document.getElementById(
+            "portfolioGrid"
+        );
+
+    const filterContainer =
+        document.getElementById(
+            "filterContainer"
+        );
+
+
+    if (!grid) return;
+
+
+    fetch("/api/portfolio")
         .then(response => {
-            if (!response.ok) throw new Error('Error en la red');
+
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
+
             return response.json();
         })
-        .then(tattoos => {
-            track.innerHTML = '';
+        .then(data => {
 
-            if (!Array.isArray(tattoos) || tattoos.length === 0) {
-                track.innerHTML = '<p class="error-msg">No hay trabajos destacados.</p>';
+            grid.innerHTML = "";
+
+
+            if (
+                !Array.isArray(data) ||
+                data.length === 0
+            ) {
+
+                grid.innerHTML =
+                    `<p style="
+                        color:#fff;
+                        grid-column:1/-1;
+                        text-align:center;
+                    ">
+                        No hay trabajos disponibles.
+                    </p>`;
+
                 return;
             }
 
-            tattoos.forEach(tattoo => {
-                const item = document.createElement('div');
-                item.className = 'carousel-item';
 
-                const img = document.createElement('img');
-                const rutaLimpia = String(tattoo.imagen || '').replace(/\\/g, '/');
-                const imagenUrl = /^https?:\/\//i.test(rutaLimpia)
-                    ? rutaLimpia
-                    : `/${rutaLimpia.replace(/^\/+/, '')}`;
+            const estilosUnicos =
+                new Set();
 
-                img.src = imagenUrl;
-                img.alt = `Tatuaje ${tattoo.estilo || 'Krym'}`;
 
-                if (lightbox && lightboxImg) {
-                    img.addEventListener('click', () => {
-                        lightboxImg.src = img.src;
-                        lightbox.style.display = 'flex';
-                        setTimeout(() => lightbox.classList.add('active'), 10);
-                    });
+            data.forEach(item => {
+
+                appendFotoHtml(item);
+
+
+                if (item.estilo) {
+                    estilosUnicos.add(
+                        item.estilo.trim()
+                    );
                 }
-
-                item.appendChild(img);
-                track.appendChild(item);
             });
 
-            iniciarLogicaCarrusel();
-        })
-        .catch(err => {
-            console.error('Error cargando carrusel:', err);
-            track.innerHTML = '<p class="error-msg">No se pudieron cargar los trabajos.</p>';
-        });
 
-    if (lightbox && lightboxClose) {
-        lightboxClose.addEventListener('click', cerrarLightbox);
-        lightbox.addEventListener('click', e => {
-            if (e.target !== lightboxImg && e.target !== lightboxClose) {
-                cerrarLightbox();
+            if (filterContainer) {
+
+                filterContainer.innerHTML =
+                    `<button
+                        class="filter-btn active"
+                        onclick="filtrarEstilo('all', this)">
+                        Todos
+                    </button>`;
+
+
+                estilosUnicos.forEach(
+                    estilo => {
+
+                        const button =
+                            document.createElement(
+                                "button"
+                            );
+
+
+                        button.className =
+                            "filter-btn";
+
+
+                        button.textContent =
+                            estilo
+                                .charAt(0)
+                                .toUpperCase() +
+                            estilo.slice(1);
+
+
+                        button.onclick =
+                            function () {
+
+                                filtrarEstilo(
+                                    estilo,
+                                    this
+                                );
+                            };
+
+
+                        filterContainer.appendChild(
+                            button
+                        );
+                    }
+                );
+            }
+        })
+        .catch(error => {
+
+            console.error(
+                "Error cargando portfolio:",
+                error
+            );
+
+
+            grid.innerHTML =
+                `<p style="
+                    color:#fff;
+                    grid-column:1/-1;
+                    text-align:center;
+                ">
+                    No se pudo cargar el portafolio.
+                </p>`;
+        });
+}
+
+
+function filtrarEstilo(
+    filterValue,
+    button
+) {
+
+    document
+        .querySelectorAll(".filter-btn")
+        .forEach(btn =>
+            btn.classList.remove("active")
+        );
+
+
+    if (button) {
+        button.classList.add("active");
+    }
+
+
+    document
+        .querySelectorAll(
+            ".portfolio-card"
+        )
+        .forEach(card => {
+
+            if (
+                filterValue === "all" ||
+                card.dataset.category ===
+                    filterValue
+            ) {
+                card.style.display =
+                    "block";
+            } else {
+                card.style.display =
+                    "none";
             }
         });
-    }
-}
-
-function cerrarLightbox() {
-    const lightbox = document.getElementById('lightbox');
-    const lightboxImg = document.getElementById('lightboxImg');
-    if (!lightbox) return;
-
-    lightbox.classList.remove('active');
-    setTimeout(() => {
-        lightbox.style.display = 'none';
-        if (lightboxImg) lightboxImg.src = '';
-    }, 300);
-}
-
-function iniciarLogicaCarrusel() {
-    const container = document.getElementById('carouselContainer');
-    const track = document.getElementById('carouselTrack');
-    if (!track || !container) return;
-
-    let items = Array.from(track.children);
-    if (items.length === 0) return;
-
-    const nextBtn = document.querySelector('.next-btn');
-    const prevBtn = document.querySelector('.prev-btn');
-    const gap = 30;
-    const itemWidth = 300;
-    step = itemWidth + gap;
-
-    if (nextBtn) {
-        nextBtn.onclick = () => moveToSlide(currentIndex + 1);
-    }
-    if (prevBtn) {
-        prevBtn.onclick = () => moveToSlide(currentIndex - 1);
-    }
-
-    moveToSlide(currentIndex, false);
-}
-
-function moveToSlide(index, animate = true) {
-    const container = document.getElementById('carouselContainer');
-    const track = document.getElementById('carouselTrack');
-    if (!track || !container) return;
-
-    const items = Array.from(track.children);
-    if (items.length === 0) return;
-
-    if (animate) {
-        track.style.transition = "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)";
-    } else {
-        track.style.transition = "none";
-    }
-
-    const containerWidth = container.offsetWidth;
-    const offset = (index * step) - (containerWidth / 2) + (300 / 2);
-    track.style.transform = `translateX(${-offset}px)`;
-
-    currentIndex = index;
-
-    items.forEach((item, idx) => {
-        if (idx === currentIndex) {
-            item.classList.add('active-center');
-        } else {
-            item.classList.remove('active-center');
-        }
-    });
 }
 
 
 /* ==========================================================================
-    INICIALIZACIÓN SEGUIRA DE EVENTOS
+   OFERTAS
 ========================================================================== */
-function inicializarApp() {
-    actualizarBotonNav();
 
-    if (isLogged) {
-        document.body.classList.add('admin-mode');
+function saveOfertaItem() {
+
+    if (!isLogged || !adminToken) {
+
+        alert(
+            "Debes iniciar sesión como administrador."
+        );
+
+        return;
     }
 
-    const formPortfolio = document.getElementById('form-portfolio');
-    if (formPortfolio) {
-        formPortfolio.addEventListener('submit', savePortfolioItem);
+
+    const titulo =
+        document.getElementById(
+            "ofTitle"
+        ).value;
+
+
+    const precio =
+        document.getElementById(
+            "ofPrice"
+        ).value;
+
+
+    const file =
+        document.getElementById(
+            "ofFile"
+        ).files[0];
+
+
+    if (!titulo || !precio || !file) {
+
+        alert(
+            "Completa todos los campos."
+        );
+
+        return;
     }
+
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "titulo",
+        titulo
+    );
+
+    formData.append(
+        "precio",
+        precio
+    );
+
+    formData.append(
+        "imagen",
+        file
+    );
+
+
+    adminFetch(
+        "/guardarOferta",
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+        .then(async response => {
+
+            const text =
+                await response.text();
+
+            if (!response.ok) {
+                throw new Error(
+                    text ||
+                    "Error al guardar la oferta."
+                );
+            }
+
+            return text;
+        })
+        .then(message => {
+
+            alert(message);
+
+            cerrarModal(
+                "modalOfertas"
+            );
+
+            window.location.reload();
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            alert(
+                error.message ||
+                "Error al guardar la oferta."
+            );
+        });
+}
+
+
+function cargarOfertasDesdeServidor() {
+
+    const container =
+        document.getElementById(
+            "ofertasContainer"
+        );
+
+
+    if (!container) return;
+
+
+    fetch("/api/ofertas")
+        .then(response => {
+
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(ofertas => {
+
+            container.innerHTML = "";
+
+
+            if (
+                !Array.isArray(ofertas) ||
+                ofertas.length === 0
+            ) {
+
+                container.innerHTML =
+                    `<p class="error-msg"
+                        style="
+                            grid-column:1/-1;
+                            text-align:center;
+                        ">
+                        No hay ofertas disponibles.
+                    </p>`;
+
+                return;
+            }
+
+
+            ofertas.forEach(
+                oferta => {
+
+                    const card =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    card.className =
+                        "flash-card admin-draggable";
+
+
+                    card.dataset.id =
+                        oferta.id;
+
+
+                    const ruta =
+                        String(
+                            oferta.imagen || ""
+                        ).replace(
+                            /\\/g,
+                            "/"
+                        );
+
+
+                    const imagenUrl =
+                        /^https?:\/\//i.test(
+                            ruta
+                        )
+                            ? ruta
+                            : `/${ruta.replace(
+                                /^\/+/,
+                                ""
+                            )}`;
+
+
+                    card.innerHTML = `
+
+                        <img
+                            src="${escaparHtml(
+                                imagenUrl
+                            )}"
+                            class="flash-img"
+                            alt="${escaparHtml(
+                                oferta.titulo
+                            )}"
+                        >
+
+                        <div class="flash-info">
+
+                            <span class="flash-tag">
+                                Disponible
+                            </span>
+
+                            <h3 class="flash-title">
+                                ${escaparHtml(
+                                    oferta.titulo
+                                )}
+                            </h3>
+
+                            <div class="flash-price">
+                                ${escaparHtml(
+                                    oferta.precio
+                                )}€
+                            </div>
+
+                            <button
+                                class="btn-principal"
+                                onclick="navegarA('contacto')">
+                                Reservar
+                            </button>
+
+                        </div>
+
+                        ${
+                            isLogged
+                                ? `
+                                    <div class="admin-card-actions">
+
+                                        <span
+                                            class="drag-handle"
+                                            title="Arrastrar para mover">
+                                            ☷
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            class="admin-delete-btn"
+                                            title="Eliminar">
+                                            🗑
+                                        </button>
+
+                                    </div>
+                                `
+                                : ""
+                        }
+
+                    `;
+
+
+                    const img =
+                        card.querySelector(
+                            ".flash-img"
+                        );
+
+
+                    if (img) {
+
+                        img.style.cursor =
+                            "zoom-in";
+
+
+                        img.addEventListener(
+                            "click",
+                            () => {
+
+                                const lightbox =
+                                    document.getElementById(
+                                        "lightbox"
+                                    );
+
+                                const lightboxImg =
+                                    document.getElementById(
+                                        "lightboxImg"
+                                    );
+
+
+                                if (
+                                    lightbox &&
+                                    lightboxImg
+                                ) {
+
+                                    lightboxImg.src =
+                                        imagenUrl;
+
+                                    lightbox.style.display =
+                                        "flex";
+
+                                    setTimeout(
+                                        () =>
+                                            lightbox.classList.add(
+                                                "active"
+                                            ),
+                                        10
+                                    );
+                                }
+                            }
+                        );
+                    }
+
+
+                    if (isLogged) {
+
+                        const deleteButton =
+                            card.querySelector(
+                                ".admin-delete-btn"
+                            );
+
+
+                        if (deleteButton) {
+
+                            deleteButton.addEventListener(
+                                "click",
+                                event => {
+
+                                    event.stopPropagation();
+
+                                    eliminarOferta(
+                                        oferta.id
+                                    );
+                                }
+                            );
+                        }
+
+
+                        activarDrag(
+                            card,
+                            "ofertasContainer",
+                            "/api/ofertas/reordenar"
+                        );
+                    }
+
+
+                    container.appendChild(card);
+                }
+            );
+        })
+        .catch(error => {
+
+            console.error(
+                "Error cargando ofertas:",
+                error
+            );
+
+
+            container.innerHTML =
+                `<p class="error-msg"
+                    style="
+                        grid-column:1/-1;
+                        text-align:center;
+                    ">
+                    No se pudieron cargar las ofertas.
+                </p>`;
+        });
+}
+
+
+/* ==========================================================================
+   FAQ
+========================================================================== */
+
+let todasLasPreguntas = [];
+
+
+async function cargarFaqsDesdeServidor() {
+
+    const faqList =
+        document.getElementById(
+            "faqList"
+        );
+
+
+    if (!faqList) return;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/faq",
+                {
+                    method: "GET",
+                    headers: {
+                        Accept:
+                            "application/json"
+                    }
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+
+        const faqs =
+            await response.json();
+
+
+        todasLasPreguntas =
+            Array.isArray(faqs)
+                ? faqs
+                : [];
+
+
+        renderizarFaqs(
+            todasLasPreguntas
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Error cargando FAQ:",
+            error
+        );
+
+
+        faqList.innerHTML =
+            `<p class="error-msg"
+                style="
+                    text-align:center;
+                    color:#ff6b6b;
+                ">
+                No se pudieron cargar las preguntas frecuentes.
+            </p>`;
+    }
+}
+
+
+function renderizarFaqs(listaFaqs) {
+
+    const faqList =
+        document.getElementById(
+            "faqList"
+        );
+
+
+    if (!faqList) return;
+
+
+    faqList.innerHTML = "";
+
+
+    if (
+        !Array.isArray(listaFaqs) ||
+        listaFaqs.length === 0
+    ) {
+
+        faqList.innerHTML =
+            `<p class="error-msg"
+                style="
+                    text-align:center;
+                    color:#888;
+                ">
+                No se encontraron preguntas.
+            </p>`;
+
+        return;
+    }
+
+
+    listaFaqs.forEach(faq => {
+
+        const item =
+            document.createElement(
+                "div"
+            );
+
+
+        item.className =
+            "faq-item admin-draggable";
+
+
+        item.dataset.id =
+            faq.id;
+
+
+        const pregunta =
+            String(
+                faq.pregunta ?? ""
+            );
+
+
+        const respuesta =
+            String(
+                faq.respuesta ?? ""
+            );
+
+
+        item.innerHTML = `
+
+            <div class="faq-question">
+
+                ${escaparHtml(
+                    pregunta
+                )}
+
+                <span>+</span>
+
+            </div>
+
+            <div class="faq-answer">
+
+                ${escaparHtml(
+                    respuesta
+                ).replace(
+                    /\n/g,
+                    "<br>"
+                )}
+
+            </div>
+
+            ${
+                isLogged
+                    ? `
+                        <div class="admin-card-actions">
+
+                            <span
+                                class="drag-handle"
+                                title="Arrastrar para mover">
+                                ☷
+                            </span>
+
+                            <button
+                                type="button"
+                                class="admin-delete-btn"
+                                title="Eliminar">
+                                🗑
+                            </button>
+
+                        </div>
+                    `
+                    : ""
+            }
+
+        `;
+
+
+        const question =
+            item.querySelector(
+                ".faq-question"
+            );
+
+
+        if (question) {
+
+            question.addEventListener(
+                "click",
+                () => {
+
+                    item.classList.toggle(
+                        "open"
+                    );
+                }
+            );
+        }
+
+
+        if (isLogged) {
+
+            const deleteButton =
+                item.querySelector(
+                    ".admin-delete-btn"
+                );
+
+
+            if (deleteButton) {
+
+                deleteButton.addEventListener(
+                    "click",
+                    event => {
+
+                        event.stopPropagation();
+
+                        eliminarFaq(
+                            faq.id
+                        );
+                    }
+                );
+            }
+
+
+            activarDrag(
+                item,
+                "faqList",
+                "/api/faq/reordenar"
+            );
+        }
+
+
+        faqList.appendChild(item);
+    });
+}
+
+
+function buscarPreguntas() {
+
+    const input =
+        document.getElementById(
+            "faqSearch"
+        );
+
+
+    if (!input) return;
+
+
+    const query =
+        input.value
+            .toLowerCase()
+            .trim();
+
+
+    const filtradas =
+        todasLasPreguntas.filter(
+            faq => {
+
+                const pregunta =
+                    String(
+                        faq.pregunta ?? ""
+                    ).toLowerCase();
+
+
+                const respuesta =
+                    String(
+                        faq.respuesta ?? ""
+                    ).toLowerCase();
+
+
+                return (
+                    pregunta.includes(query) ||
+                    respuesta.includes(query)
+                );
+            }
+        );
+
+
+    renderizarFaqs(
+        filtradas
+    );
+}
+
+
+function saveFaqItem() {
+
+    if (!isLogged || !adminToken) {
+
+        alert(
+            "Debes iniciar sesión como administrador."
+        );
+
+        return;
+    }
+
+
+    const pregunta =
+        document.getElementById(
+            "faqQ"
+        ).value.trim();
+
+
+    const respuesta =
+        document.getElementById(
+            "faqA"
+        ).value.trim();
+
+
+    if (!pregunta || !respuesta) {
+
+        alert(
+            "Completa todos los campos."
+        );
+
+        return;
+    }
+
+
+    adminFetch(
+        "/guardarFaq",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+
+            body: JSON.stringify({
+                pregunta,
+                respuesta
+            })
+        }
+    )
+        .then(async response => {
+
+            const data =
+                await response
+                    .json()
+                    .catch(() => ({}));
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    "No se pudo guardar la FAQ."
+                );
+            }
+
+
+            return data;
+        })
+        .then(() => {
+
+            alert(
+                "Pregunta guardada correctamente."
+            );
+
+            cerrarModal(
+                "modalFaq"
+            );
+
+            window.location.reload();
+        })
+        .catch(error => {
+
+            console.error(error);
+
+            alert(
+                error.message ||
+                "Error al guardar la pregunta."
+            );
+        });
+}
+
+
+/* ==========================================================================
+   CALENDARIO
+========================================================================== */
+
+let currentYear = 2026;
+let currentMonth = 6;
+
+let festivos = [];
+
+try {
+
+    festivos =
+        JSON.parse(
+            localStorage.getItem(
+                "kFestivos"
+            ) || "[]"
+        );
+
+} catch (error) {
+
+    festivos = [];
+}
+
+
+let modoGestionFestivos = false;
+
+
+const mesesNombres = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre"
+];
+
+
+function activarModoGestionFestivos() {
+
+    modoGestionFestivos =
+        !modoGestionFestivos;
+
+
+    const helper =
+        document.getElementById(
+            "adminHollidayHelper"
+        );
+
+
+    if (helper) {
+
+        helper.style.display =
+            modoGestionFestivos
+                ? "block"
+                : "none";
+    }
+
+
+    alert(
+        modoGestionFestivos
+            ? "Modo de gestión de festivos activado."
+            : "Modo gestión cerrado."
+    );
+}
+
+
+function renderCalendar() {
+
+    const grid =
+        document.getElementById(
+            "calendarGrid"
+        );
+
+
+    if (!grid) return;
+
+
+    const title =
+        document.getElementById(
+            "calendarMonthTitle"
+        );
+
+
+    if (title) {
+
+        title.textContent =
+            `${mesesNombres[currentMonth]} ${currentYear}`;
+    }
+
+
+    grid.innerHTML = "";
+
+
+    const diasSemana = [
+        "L",
+        "M",
+        "X",
+        "J",
+        "V",
+        "S",
+        "D"
+    ];
+
+
+    diasSemana.forEach(day => {
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+        element.className =
+            "calendar-day-name";
+
+        element.textContent =
+            day;
+
+        grid.appendChild(element);
+    });
+
+
+    let firstDay =
+        new Date(
+            currentYear,
+            currentMonth,
+            1
+        ).getDay();
+
+
+    firstDay =
+        firstDay === 0
+            ? 6
+            : firstDay - 1;
+
+
+    const totalDays =
+        new Date(
+            currentYear,
+            currentMonth + 1,
+            0
+        ).getDate();
+
+
+    for (
+        let i = 0;
+        i < firstDay;
+        i++
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "calendar-day empty";
+
+        grid.appendChild(empty);
+    }
+
+
+    for (
+        let day = 1;
+        day <= totalDays;
+        day++
+    ) {
+
+        const dayBox =
+            document.createElement(
+                "div"
+            );
+
+
+        dayBox.className =
+            "calendar-day";
+
+
+        dayBox.textContent =
+            day;
+
+
+        const dateString =
+            `${currentYear}-${String(
+                currentMonth + 1
+            ).padStart(2, "0")}-${String(
+                day
+            ).padStart(2, "0")}`;
+
+
+        if (
+            festivos.includes(
+                dateString
+            )
+        ) {
+
+            dayBox.classList.add(
+                "festivo"
+            );
+        }
+
+
+        dayBox.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    modoGestionFestivos
+                ) {
+
+                    if (
+                        festivos.includes(
+                            dateString
+                        )
+                    ) {
+
+                        festivos =
+                            festivos.filter(
+                                date =>
+                                    date !==
+                                    dateString
+                            );
+
+                    } else {
+
+                        festivos.push(
+                            dateString
+                        );
+                    }
+
+
+                    localStorage.setItem(
+                        "kFestivos",
+                        JSON.stringify(
+                            festivos
+                        )
+                    );
+
+
+                    renderCalendar();
+
+                    return;
+                }
+
+
+                if (
+                    festivos.includes(
+                        dateString
+                    )
+                ) {
+
+                    alert(
+                        "Este día es festivo/no laborable."
+                    );
+
+                    return;
+                }
+
+
+                document
+                    .querySelectorAll(
+                        ".calendar-day"
+                    )
+                    .forEach(
+                        element =>
+                            element.classList.remove(
+                                "selected"
+                            )
+                    );
+
+
+                dayBox.classList.add(
+                    "selected"
+                );
+
+
+                const input =
+                    document.getElementById(
+                        "selectedDateInput"
+                    );
+
+
+                if (input) {
+                    input.value =
+                        dateString;
+                }
+
+
+                const display =
+                    document.getElementById(
+                        "formDateDisplay"
+                    );
+
+
+                if (display) {
+
+                    display.value =
+                        `Día seleccionado: ${day} de ${mesesNombres[currentMonth]}`;
+                }
+            }
+        );
+
+
+        grid.appendChild(
+            dayBox
+        );
+    }
+}
+
+
+function cambiarMes(dir) {
+
+    currentMonth += dir;
+
+
+    if (currentMonth > 11) {
+
+        currentMonth = 0;
+        currentYear++;
+    }
+
+
+    if (currentMonth < 0) {
+
+        currentMonth = 11;
+        currentYear--;
+    }
+
 
     renderCalendar();
+}
+
+
+/* ==========================================================================
+   CORREO
+========================================================================== */
+
+function enviarCorreoCita(event) {
+
+    event.preventDefault();
+
+
+    const fileInput =
+        document.getElementById(
+            "formFoto"
+        );
+
+
+    const file =
+        fileInput &&
+        fileInput.files
+            ? fileInput.files[0]
+            : null;
+
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "nombre",
+        document.getElementById(
+            "formName"
+        ).value
+    );
+
+
+    formData.append(
+        "email",
+        document.getElementById(
+            "formEmail"
+        ).value
+    );
+
+
+    formData.append(
+        "idea",
+        document.getElementById(
+            "formIdea"
+        ).value
+    );
+
+
+    if (file) {
+
+        formData.append(
+            "imagen",
+            file
+        );
+    }
+
+
+    fetch(
+        "/api/citas-correo",
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+        .then(async response => {
+
+            const data =
+                await response
+                    .json()
+                    .catch(() => ({}));
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    "Error al enviar el correo."
+                );
+            }
+
+
+            return data;
+        })
+        .then(() => {
+
+            alert(
+                "¡Tu propuesta de diseño ha sido enviada con éxito! Nos pondremos en contacto contigo pronto."
+            );
+
+
+            const form =
+                document.getElementById(
+                    "appointmentForm"
+                );
+
+
+            if (form) {
+                form.reset();
+            }
+        })
+        .catch(error => {
+
+            console.error(
+                "Error en el envío:",
+                error
+            );
+
+
+            alert(
+                error.message ||
+                "Hubo un inconveniente al enviar tu idea."
+            );
+        });
+}
+
+
+/* ==========================================================================
+   CARRUSEL
+========================================================================== */
+
+let currentIndex = 2;
+let step = 330;
+
+
+function cargarCarruselDestacados() {
+
+    const track =
+        document.getElementById(
+            "carouselTrack"
+        );
+
+
+    const lightbox =
+        document.getElementById(
+            "lightbox"
+        );
+
+
+    const lightboxImg =
+        document.getElementById(
+            "lightboxImg"
+        );
+
+
+    const lightboxClose =
+        document.querySelector(
+            ".lightbox-close"
+        );
+
+
+    if (!track) return;
+
+
+    fetch("/api/portfolio")
+        .then(response => {
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "Error en la red"
+                );
+            }
+
+            return response.json();
+        })
+        .then(tattoos => {
+
+            track.innerHTML = "";
+
+
+            if (
+                !Array.isArray(tattoos) ||
+                tattoos.length === 0
+            ) {
+
+                track.innerHTML =
+                    '<p class="error-msg">No hay trabajos destacados.</p>';
+
+                return;
+            }
+
+
+            tattoos.forEach(
+                tattoo => {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "carousel-item";
+
+
+                    const image =
+                        document.createElement(
+                            "img"
+                        );
+
+
+                    const clean =
+                        String(
+                            tattoo.imagen || ""
+                        ).replace(
+                            /\\/g,
+                            "/"
+                        );
+
+
+                    const url =
+                        /^https?:\/\//i.test(
+                            clean
+                        )
+                            ? clean
+                            : `/${clean.replace(
+                                /^\/+/,
+                                ""
+                            )}`;
+
+
+                    image.src =
+                        url;
+
+
+                    image.alt =
+                        `Tatuaje ${
+                            tattoo.estilo ||
+                            "Krym"
+                        }`;
+
+
+                    if (
+                        lightbox &&
+                        lightboxImg
+                    ) {
+
+                        image.addEventListener(
+                            "click",
+                            () => {
+
+                                lightboxImg.src =
+                                    image.src;
+
+                                lightbox.style.display =
+                                    "flex";
+
+                                setTimeout(
+                                    () =>
+                                        lightbox.classList.add(
+                                            "active"
+                                        ),
+                                    10
+                                );
+                            }
+                        );
+                    }
+
+
+                    item.appendChild(
+                        image
+                    );
+
+
+                    track.appendChild(
+                        item
+                    );
+                }
+            );
+
+
+            iniciarLogicaCarrusel();
+        })
+        .catch(error => {
+
+            console.error(
+                "Error cargando carrusel:",
+                error
+            );
+
+
+            track.innerHTML =
+                '<p class="error-msg">No se pudieron cargar los trabajos.</p>';
+        });
+
+
+    if (
+        lightbox &&
+        lightboxClose
+    ) {
+
+        lightboxClose.addEventListener(
+            "click",
+            cerrarLightbox
+        );
+
+
+        lightbox.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target !==
+                        lightboxImg &&
+                    event.target !==
+                        lightboxClose
+                ) {
+
+                    cerrarLightbox();
+                }
+            }
+        );
+    }
+}
+
+
+function cerrarLightbox() {
+
+    const lightbox =
+        document.getElementById(
+            "lightbox"
+        );
+
+
+    const image =
+        document.getElementById(
+            "lightboxImg"
+        );
+
+
+    if (!lightbox) return;
+
+
+    lightbox.classList.remove(
+        "active"
+    );
+
+
+    setTimeout(
+        () => {
+
+            lightbox.style.display =
+                "none";
+
+
+            if (image) {
+                image.src = "";
+            }
+        },
+        300
+    );
+}
+
+
+function iniciarLogicaCarrusel() {
+
+    const container =
+        document.getElementById(
+            "carouselContainer"
+        );
+
+
+    const track =
+        document.getElementById(
+            "carouselTrack"
+        );
+
+
+    if (
+        !container ||
+        !track
+    ) {
+        return;
+    }
+
+
+    const items =
+        Array.from(
+            track.children
+        );
+
+
+    if (!items.length) return;
+
+
+    const nextButton =
+        document.querySelector(
+            ".next-btn"
+        );
+
+
+    const prevButton =
+        document.querySelector(
+            ".prev-btn"
+        );
+
+
+    const gap = 30;
+
+    const itemWidth = 300;
+
+    step =
+        itemWidth + gap;
+
+
+    if (nextButton) {
+
+        nextButton.onclick =
+            () =>
+                moveToSlide(
+                    currentIndex + 1
+                );
+    }
+
+
+    if (prevButton) {
+
+        prevButton.onclick =
+            () =>
+                moveToSlide(
+                    currentIndex - 1
+                );
+    }
+
+
+    moveToSlide(
+        currentIndex,
+        false
+    );
+}
+
+
+function moveToSlide(
+    index,
+    animate = true
+) {
+
+    const container =
+        document.getElementById(
+            "carouselContainer"
+        );
+
+
+    const track =
+        document.getElementById(
+            "carouselTrack"
+        );
+
+
+    if (
+        !track ||
+        !container
+    ) {
+        return;
+    }
+
+
+    const items =
+        Array.from(
+            track.children
+        );
+
+
+    if (!items.length) return;
+
+
+    if (index < 0) {
+        index = items.length - 1;
+    }
+
+
+    if (index >= items.length) {
+        index = 0;
+    }
+
+
+    track.style.transition =
+        animate
+            ? "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)"
+            : "none";
+
+
+    const containerWidth =
+        container.offsetWidth;
+
+
+    const offset =
+        (index * step) -
+        (containerWidth / 2) +
+        (300 / 2);
+
+
+    track.style.transform =
+        `translateX(${-offset}px)`;
+
+
+    currentIndex =
+        index;
+
+
+    items.forEach(
+        (item, itemIndex) => {
+
+            item.classList.toggle(
+                "active-center",
+                itemIndex === currentIndex
+            );
+        }
+    );
+}
+
+
+/* ==========================================================================
+   INICIALIZACIÓN
+========================================================================== */
+
+function inicializarApp() {
+
+    actualizarBotonNav();
+
+
+    if (isLogged) {
+
+        document.body.classList.add(
+            "admin-mode"
+        );
+    }
+
+
+    const formPortfolio =
+        document.getElementById(
+            "form-portfolio"
+        );
+
+
+    if (formPortfolio) {
+
+        formPortfolio.addEventListener(
+            "submit",
+            savePortfolioItem
+        );
+    }
+
+
+    renderCalendar();
+
     cargarPortfolioDesdeBD();
+
     cargarOfertasDesdeServidor();
+
     cargarFaqsDesdeServidor();
+
     cargarCarruselDestacados();
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarApp);
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        inicializarApp
+    );
+
 } else {
+
     inicializarApp();
 }

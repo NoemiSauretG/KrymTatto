@@ -461,3 +461,92 @@ body {
 .carousel-item img:hover {
     transform: scale(1.03); /* Ligero acercamiento al pasar el ratón */
 }
+/* ============================================================================
+   CONTROLES DE ADMINISTRACIÓN: MOVER Y BORRAR
+============================================================================ */
+.portfolio-card.admin-draggable,
+.flash-card.admin-draggable,
+.faq-item.admin-draggable {
+    position: relative;
+}
+
+.portfolio-card.admin-draggable,
+.flash-card.admin-draggable {
+    cursor: default;
+}
+
+.admin-card-actions {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.drag-handle {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.9);
+    border: 1px solid #d4b58a;
+    color: #d4b58a;
+    border-radius: 4px;
+    cursor: grab;
+    user-select: none;
+    font-size: 21px;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.admin-delete-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.9);
+    border: 1px solid #8b0000;
+    color: #ff7777;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.admin-delete-btn:hover {
+    background: #8b0000;
+    color: #fff;
+}
+
+.dragging {
+    opacity: .45;
+}
+
+body:not(.admin-mode) .admin-card-actions {
+    display: none;
+}
+
+.admin-edit-help {
+    display: none;
+    color: #777;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .68rem;
+    letter-spacing: .5px;
+    margin-left: auto;
+    margin-right: 18px;
+}
+
+body.admin-mode .admin-edit-help {
+    display: inline-block;
+}
+
+@media (max-width: 600px) {
+    .admin-edit-help { font-size: .58rem; margin-right: 8px; }
+    .admin-card-actions { right: 7px; bottom: 7px; }
+    .drag-handle, .admin-delete-btn { width: 32px; height: 32px; }
+}
