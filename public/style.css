@@ -1338,3 +1338,103 @@ body.admin-mode .admin-edit-help {
         min-height: 265px;
     }
 }
+
+/* ============================================================
+   CALENDARIO MÓVIL — FLECHAS
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    body.public-site .calendar-header {
+        display: grid;
+        grid-template-columns: 38px 1fr 38px;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 14px;
+    }
+
+    body.public-site .calendar-header h3 {
+        text-align: center;
+        margin: 0;
+        white-space: nowrap;
+        font-size: .9rem !important;
+        letter-spacing: .5px !important;
+    }
+
+    body.public-site .calendar-header .btn-secundario {
+        width: 38px !important;
+        height: 38px;
+        min-width: 38px;
+        padding: 0 !important;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-size: .75rem;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    body.public-site .calendar-header .btn-secundario:active {
+        transform: scale(.92);
+    }
+}
+
+@media (max-width: 380px) {
+
+    body.public-site .calendar-header {
+        grid-template-columns: 34px 1fr 34px;
+        gap: 5px;
+    }
+
+    body.public-site .calendar-header .btn-secundario {
+        width: 34px !important;
+        height: 34px;
+        min-width: 34px;
+        font-size: .68rem;
+    }
+
+    body.public-site .calendar-header h3 {
+        font-size: .82rem !important;
+    }
+}
+
+
+
+/* ============================================================
+   CARRUSEL MÓVIL — LATERALES MÁS JUNTAS
+   ============================================================ */
+
+@media (max-width: 768px) {
+    body.public-site .carousel-track {
+        gap: 0;
+    }
+
+    body.public-site .carousel-item {
+        flex-basis: 69vw;
+        width: 69vw;
+        transform: scale(.84);
+        margin-left: -3px;
+        margin-right: -3px;
+    }
+
+    body.public-site .carousel-item.active-center {
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 380px) {
+    body.public-site .carousel-item {
+        flex-basis: 71vw;
+        width: 71vw;
+        transform: scale(.82);
+        margin-left: -2px;
+        margin-right: -2px;
+    }
+
+    body.public-site .carousel-item.active-center {
+        transform: scale(1);
+    }
+}
