@@ -2,8 +2,6 @@
    ESTADO GLOBAL Y AUTENTICACIÓN
 ========================================================================== */
 
-const API_BASE_URL = "https://www.krymtattoo.com";
-
 let adminToken = localStorage.getItem("adminKrymToken") || "";
 let isLogged = !!adminToken;
 
@@ -14,12 +12,7 @@ async function adminFetch(url, options = {}) {
         headers.set("Authorization", `Bearer ${adminToken}`);
     }
 
-    const apiUrl =
-        /^https?:\/\//i.test(url)
-            ? url
-            : `${API_BASE_URL}${url}`;
-
-    return fetch(apiUrl, {
+    return fetch(url, {
         ...options,
         headers
     });
@@ -52,7 +45,7 @@ function controlLoginGlobal() {
 
     if (!password) return;
 
-    fetch(`${API_BASE_URL}/api/login`, {
+    fetch("/api/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -774,7 +767,7 @@ function cargarPortfolioDesdeBD() {
     if (!grid) return;
 
 
-    fetch(`${API_BASE_URL}/api/portfolio`)
+    fetch("/api/portfolio")
         .then(response => {
 
             if (!response.ok) {
@@ -1048,7 +1041,7 @@ function cargarOfertasDesdeServidor() {
     if (!container) return;
 
 
-    fetch(`${API_BASE_URL}/api/ofertas`)
+    fetch("/api/ofertas")
         .then(response => {
 
             if (!response.ok) {
@@ -1312,7 +1305,7 @@ async function cargarFaqsDesdeServidor() {
 
         const response =
             await fetch(
-                `${API_BASE_URL}/api/faq`,
+                "/api/faq",
                 {
                     method: "GET",
                     headers: {
@@ -2074,7 +2067,7 @@ function enviarCorreoCita(event) {
 
 
     fetch(
-        `${API_BASE_URL}/api/citas-correo`,
+        "/api/citas-correo",
         {
             method: "POST",
             body: formData
@@ -2151,7 +2144,7 @@ function cargarCarruselDestacados() {
 
     if (!track) return;
 
-    fetch(`${API_BASE_URL}/api/portfolio`)
+    fetch("/api/portfolio")
         .then(response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();

@@ -8,17 +8,11 @@ const { put, del } = require("@vercel/blob");
 
 const app = express();
 
-const FRONTEND_URL = "https://www.krymtattoo.com";
-
 /* ============================================================
    MIDDLEWARE
 ============================================================ */
 
-app.use(cors({
-    origin: FRONTEND_URL,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(cors());
 
 app.use(express.json({ limit: "2mb" }));
 
@@ -49,8 +43,7 @@ app.get("/api/test", (req, res) => {
     res.json({
         ok: true,
         mensaje: "Express funciona en Vercel",
-        url: req.originalUrl,
-        frontend: FRONTEND_URL
+        url: req.originalUrl
     });
 
 });
