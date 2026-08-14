@@ -2456,6 +2456,97 @@ function iniciarLogicaCarrusel() {
                 );
     }
 
+    // ============================================================
+    // SWIPE TÁCTIL EN MÓVIL
+    // ============================================================
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    let isTouchingCarousel = false;
+
+    container.addEventListener(
+        "touchstart",
+        event => {
+
+            if (!event.touches || !event.touches.length) {
+                return;
+            }
+
+            touchStartX =
+                event.touches[0].clientX;
+
+            touchStartY =
+                event.touches[0].clientY;
+
+            touchEndX =
+                touchStartX;
+
+            touchEndY =
+                touchStartY;
+
+            isTouchingCarousel = true;
+        },
+        { passive: true }
+    );
+
+    container.addEventListener(
+        "touchmove",
+        event => {
+
+            if (!isTouchingCarousel ||
+                !event.touches ||
+                !event.touches.length) {
+                return;
+            }
+
+            touchEndX =
+                event.touches[0].clientX;
+
+            touchEndY =
+                event.touches[0].clientY;
+        },
+        { passive: true }
+    );
+
+    container.addEventListener(
+        "touchend",
+        () => {
+
+            if (!isTouchingCarousel) {
+                return;
+            }
+
+            isTouchingCarousel = false;
+
+            const deltaX =
+                touchEndX - touchStartX;
+
+            const deltaY =
+                touchEndY - touchStartY;
+
+            // Solo consideramos swipe horizontal.
+            if (
+                Math.abs(deltaX) < 45 ||
+                Math.abs(deltaX) < Math.abs(deltaY)
+            ) {
+                return;
+            }
+
+            if (deltaX < 0) {
+                moveToSlide(
+                    currentIndex + 1
+                );
+            } else {
+                moveToSlide(
+                    currentIndex - 1
+                );
+            }
+        },
+        { passive: true }
+    );
+
 
     moveToSlide(
         currentIndex,
