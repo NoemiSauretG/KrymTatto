@@ -532,10 +532,6 @@ function appendFotoHtml(item) {
     if (!grid) return;
 
 
-    // ============================================================
-    // TARJETA
-    // ============================================================
-
     const card =
         document.createElement("div");
 
@@ -549,10 +545,6 @@ function appendFotoHtml(item) {
         item.estilo || "";
 
 
-    // ============================================================
-    // URL DE LA IMAGEN
-    // ============================================================
-
     const cleanSrc =
         String(item.imagen || "")
             .replace(/\\/g, "/");
@@ -562,10 +554,6 @@ function appendFotoHtml(item) {
             ? cleanSrc
             : `/${cleanSrc.replace(/^\/+/, "")}`;
 
-
-    // ============================================================
-    // HTML DE LA TARJETA
-    // ============================================================
 
     card.innerHTML = `
 
@@ -603,10 +591,6 @@ function appendFotoHtml(item) {
 
     `;
 
-
-    // ============================================================
-    // LIGHTBOX / AUMENTAR IMAGEN
-    // ============================================================
 
     const image =
         card.querySelector(".portfolio-img");
@@ -662,10 +646,6 @@ function appendFotoHtml(item) {
     }
 
 
-    // ============================================================
-    // BOTÓN ELIMINAR
-    // ============================================================
-
     if (isLogged) {
 
         const deleteButton =
@@ -693,10 +673,6 @@ function appendFotoHtml(item) {
         }
 
 
-        // ========================================================
-        // DRAG & DROP
-        // ========================================================
-
         activarDrag(
             card,
             "portfolioGrid",
@@ -704,10 +680,6 @@ function appendFotoHtml(item) {
         );
     }
 
-
-    // ============================================================
-    // AÑADIR AL GRID
-    // ============================================================
 
     grid.appendChild(card);
 }
@@ -2149,7 +2121,7 @@ function enviarCorreoCita(event) {
 
 
 /* ==========================================================================
-   CARRUSEL
+   CARRUSEL (CENTRADO DINÁMICO Y ESTADO ACTIVO)
 ========================================================================== */
 
 let currentIndex = 0;
@@ -2158,14 +2130,9 @@ let carouselTouchStartY = 0;
 let carouselTouchEndX = 0;
 let carouselTouching = false;
 
-
-/* ==========================================================================
-   CARRUSEL — CENTRADO SEGÚN EL TAMAÑO REAL DE LA TARJETA
-========================================================================== */
-
 function cargarCarruselDestacados() {
 
-    const track = document.getElementById("carouselTrack");
+    const track = document.getElementById("carouselTrack") || document.querySelector(".carousel-track");
     const lightbox = document.getElementById("lightbox");
     const lightboxImg = document.getElementById("lightboxImg");
     const lightboxClose = document.querySelector(".lightbox-close");
@@ -2253,8 +2220,8 @@ function cerrarLightbox() {
 
 function iniciarLogicaCarrusel() {
 
-    const container = document.getElementById("carouselContainer");
-    const track = document.getElementById("carouselTrack");
+    const container = document.getElementById("carouselContainer") || document.querySelector(".carousel-container");
+    const track = document.getElementById("carouselTrack") || document.querySelector(".carousel-track");
 
     if (!container || !track) return;
 
@@ -2265,7 +2232,6 @@ function iniciarLogicaCarrusel() {
     const nextButton = document.querySelector(".next-btn");
     const prevButton = document.querySelector(".prev-btn");
 
-    // Empieza por el primer tatuaje real.
     currentIndex = Math.min(currentIndex, items.length - 1);
     if (currentIndex < 0) currentIndex = 0;
 
@@ -2277,7 +2243,7 @@ function iniciarLogicaCarrusel() {
         prevButton.onclick = () => moveToSlide(currentIndex - 1);
     }
 
-    // Swipe móvil.
+    // Eventos Touch / Swipe Móvil
     container.addEventListener("touchstart", event => {
         if (!event.touches.length) return;
 
@@ -2313,7 +2279,7 @@ function iniciarLogicaCarrusel() {
         }
     }, { passive: true });
 
-    // Espera a que el navegador calcule los tamaños responsive.
+    // Renderizado inicial adaptado
     requestAnimationFrame(() => moveToSlide(currentIndex, false));
 
     window.addEventListener("resize", () => {
@@ -2324,8 +2290,8 @@ function iniciarLogicaCarrusel() {
 
 function moveToSlide(index, animate = true) {
 
-    const container = document.getElementById("carouselContainer");
-    const track = document.getElementById("carouselTrack");
+    const container = document.getElementById("carouselContainer") || document.querySelector(".carousel-container");
+    const track = document.getElementById("carouselTrack") || document.querySelector(".carousel-track");
 
     if (!track || !container) return;
 
@@ -2333,32 +2299,34 @@ function moveToSlide(index, animate = true) {
 
     if (!items.length) return;
 
-    // Carrusel circular sin necesidad de clones.
+    // Navegación cíclica
     if (index < 0) index = items.length - 1;
     if (index >= items.length) index = 0;
 
-    const item = items[index];
+    currentIndex = index;
+    const activeItem = items[currentIndex];
 
-    // Centrado REAL:
-    // usamos la posición y anchura que tiene la tarjeta DESPUÉS del CSS responsive.
-    const containerCenter = container.clientWidth / 2;
-    const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-    const offset = itemCenter - containerCenter;
+    // Asignar clase .active-center al elemento activo
+    items.forEach((item, i) => {
+        if (i === currentIndex) {
+            item.classList.add("active-center");
+        } else {
+            item.classList.remove("active-center");
+        }
+    });
+
+    // Cálculo dinámico para CENTRAR la foto exacta en el contenedor
+    const containerWidth = container.offsetWidth || container.clientWidth;
+    const itemWidth = activeItem.offsetWidth;
+    const itemOffsetLeft = activeItem.offsetLeft;
+
+    const targetTranslate = (containerWidth / 2) - (itemOffsetLeft + itemWidth / 2);
 
     track.style.transition = animate
-        ? "transform .45s cubic-bezier(.22,1,.36,1)"
+        ? "transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)"
         : "none";
 
-    track.style.transform = `translate3d(${-offset}px, 0, 0)`;
-
-    currentIndex = index;
-
-    items.forEach((currentItem, itemIndex) => {
-        currentItem.classList.toggle(
-            "active-center",
-            itemIndex === currentIndex
-        );
-    });
+    track.style.transform = `translateX(${targetTranslate}px)`;
 }
 
 
