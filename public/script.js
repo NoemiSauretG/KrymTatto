@@ -2,6 +2,8 @@
    ESTADO GLOBAL Y AUTENTICACIÓN
 ========================================================================== */
 
+const API_BASE_URL = "https://www.krymtattoo.com";
+
 let adminToken = localStorage.getItem("adminKrymToken") || "";
 let isLogged = !!adminToken;
 
@@ -12,7 +14,12 @@ async function adminFetch(url, options = {}) {
         headers.set("Authorization", `Bearer ${adminToken}`);
     }
 
-    return fetch(url, {
+    const apiUrl =
+        /^https?:\/\//i.test(url)
+            ? url
+            : `${API_BASE_URL}${url}`;
+
+    return fetch(apiUrl, {
         ...options,
         headers
     });
@@ -45,7 +52,7 @@ function controlLoginGlobal() {
 
     if (!password) return;
 
-    fetch("/api/login", {
+    fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -767,7 +774,7 @@ function cargarPortfolioDesdeBD() {
     if (!grid) return;
 
 
-    fetch("/api/portfolio")
+    fetch(`${API_BASE_URL}/api/portfolio`)
         .then(response => {
 
             if (!response.ok) {
@@ -1041,7 +1048,7 @@ function cargarOfertasDesdeServidor() {
     if (!container) return;
 
 
-    fetch("/api/ofertas")
+    fetch(`${API_BASE_URL}/api/ofertas`)
         .then(response => {
 
             if (!response.ok) {
@@ -1305,7 +1312,7 @@ async function cargarFaqsDesdeServidor() {
 
         const response =
             await fetch(
-                "/api/faq",
+                `${API_BASE_URL}/api/faq`,
                 {
                     method: "GET",
                     headers: {
@@ -2012,9 +2019,8 @@ function enviarCorreoCita(event) {
 
 
     const fileInput =
-        document.getElementById(
-            "formFoto"
-        );
+        document.getElementById("formFile") ||
+        document.getElementById("formFoto");
 
 
     const file =
@@ -2052,6 +2058,12 @@ function enviarCorreoCita(event) {
     );
 
 
+    const fechaInput = document.getElementById("selectedDateInput");
+    if (fechaInput) {
+        formData.append("fecha", fechaInput.value);
+    }
+
+
     if (file) {
 
         formData.append(
@@ -2062,7 +2074,7 @@ function enviarCorreoCita(event) {
 
 
     fetch(
-        "/api/citas-correo",
+        `${API_BASE_URL}/api/citas-correo`,
         {
             method: "POST",
             body: formData
@@ -2139,39 +2151,37 @@ function cargarCarruselDestacados() {
 
     if (!track) return;
 
-    fetch("/api/portfolio")
+    fetch(`${API_BASE_URL}/api/portfolio`)
         .then(response => {
-            if (!response.ok) throw new Error("Error en la red");
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
         })
         .then(tattoos => {
-
             track.innerHTML = "";
 
             if (!Array.isArray(tattoos) || tattoos.length === 0) {
-                track.innerHTML =
-                    '<p class="error-msg">No hay trabajos destacados.</p>';
+                track.innerHTML = '<p class="error-msg">No hay trabajos destacados.</p>';
                 return;
             }
 
-            tattoos.forEach(tattoo => {
+            // Cinco copias: siempre hay fotos a ambos lados de la central.
+            const repeated = [];
+            for (let r = 0; r < 5; r++) tattoos.forEach(t => repeated.push(t));
 
+            repeated.forEach((tattoo, index) => {
                 const item = document.createElement("div");
                 item.className = "carousel-item";
+                item.dataset.originalIndex = index % tattoos.length;
 
                 const image = document.createElement("img");
-
-                const clean = String(tattoo.imagen || "")
-                    .replace(/\\/g, "/");
-
-                image.src = /^https?:\/\//i.test(clean)
-                    ? clean
-                    : `/${clean.replace(/^\/+/, "")}`;
-
+                const clean = String(tattoo.imagen || "").replace(/\\/g, "/");
+                image.src = /^https?:\/\//i.test(clean) ? clean : `/${clean.replace(/^\/+/, "")}`;
                 image.alt = `Tatuaje ${tattoo.estilo || "Krym"}`;
+                image.draggable = false;
 
                 if (lightbox && lightboxImg) {
-                    image.addEventListener("click", () => {
+                    image.addEventListener("click", event => {
+                        event.stopPropagation();
                         lightboxImg.src = image.src;
                         lightbox.style.display = "flex";
                         setTimeout(() => lightbox.classList.add("active"), 10);
@@ -2182,153 +2192,106 @@ function cargarCarruselDestacados() {
                 track.appendChild(item);
             });
 
+            // Arrancamos en la copia central, nunca en un extremo.
+            currentIndex = tattoos.length * 2;
             iniciarLogicaCarrusel();
         })
         .catch(error => {
             console.error("Error cargando carrusel:", error);
-            track.innerHTML =
-                '<p class="error-msg">No se pudieron cargar los trabajos.</p>';
+            track.innerHTML = '<p class="error-msg">No se pudieron cargar los trabajos.</p>';
         });
 
     if (lightbox && lightboxClose) {
-        lightboxClose.addEventListener("click", cerrarLightbox);
-
+        lightboxClose.onclick = cerrarLightbox;
         lightbox.addEventListener("click", event => {
-            if (event.target !== lightboxImg && event.target !== lightboxClose) {
-                cerrarLightbox();
-            }
+            if (event.target !== lightboxImg && event.target !== lightboxClose) cerrarLightbox();
         });
     }
 }
 
-
 function cerrarLightbox() {
-
     const lightbox = document.getElementById("lightbox");
     const image = document.getElementById("lightboxImg");
-
     if (!lightbox) return;
-
     lightbox.classList.remove("active");
-
     setTimeout(() => {
         lightbox.style.display = "none";
         if (image) image.src = "";
     }, 300);
 }
 
-
 function iniciarLogicaCarrusel() {
-
     const container = document.getElementById("carouselContainer") || document.querySelector(".carousel-container");
     const track = document.getElementById("carouselTrack") || document.querySelector(".carousel-track");
-
     if (!container || !track) return;
 
-    const items = Array.from(track.children);
-
+    const items = Array.from(track.querySelectorAll(".carousel-item"));
     if (!items.length) return;
 
     const nextButton = document.querySelector(".next-btn");
     const prevButton = document.querySelector(".prev-btn");
 
-    currentIndex = Math.min(currentIndex, items.length - 1);
-    if (currentIndex < 0) currentIndex = 0;
+    if (nextButton) nextButton.onclick = () => moveToSlide(currentIndex + 1);
+    if (prevButton) prevButton.onclick = () => moveToSlide(currentIndex - 1);
 
-    if (nextButton) {
-        nextButton.onclick = () => moveToSlide(currentIndex + 1);
-    }
-
-    if (prevButton) {
-        prevButton.onclick = () => moveToSlide(currentIndex - 1);
-    }
-
-    // Eventos Touch / Swipe Móvil
-    container.addEventListener("touchstart", event => {
+    // Swipe móvil.
+    container.ontouchstart = event => {
         if (!event.touches.length) return;
-
         carouselTouchStartX = event.touches[0].clientX;
         carouselTouchStartY = event.touches[0].clientY;
         carouselTouchEndX = carouselTouchStartX;
         carouselTouching = true;
-    }, { passive: true });
+    };
 
-    container.addEventListener("touchmove", event => {
+    container.ontouchmove = event => {
         if (!carouselTouching || !event.touches.length) return;
-
         carouselTouchEndX = event.touches[0].clientX;
-    }, { passive: true });
+    };
 
-    container.addEventListener("touchend", () => {
-
+    container.ontouchend = () => {
         if (!carouselTouching) return;
-
         carouselTouching = false;
-
         const deltaX = carouselTouchEndX - carouselTouchStartX;
-        const deltaY = 0;
+        if (Math.abs(deltaX) < 45) return;
+        moveToSlide(currentIndex + (deltaX < 0 ? 1 : -1));
+    };
 
-        if (Math.abs(deltaX) < 45 || Math.abs(deltaX) < Math.abs(deltaY)) {
-            return;
-        }
-
-        if (deltaX < 0) {
-            moveToSlide(currentIndex + 1);
-        } else {
-            moveToSlide(currentIndex - 1);
-        }
-    }, { passive: true });
-
-    // Renderizado inicial adaptado
     requestAnimationFrame(() => moveToSlide(currentIndex, false));
-
-    window.addEventListener("resize", () => {
-        moveToSlide(currentIndex, false);
-    });
 }
 
-
 function moveToSlide(index, animate = true) {
-
     const container = document.getElementById("carouselContainer") || document.querySelector(".carousel-container");
     const track = document.getElementById("carouselTrack") || document.querySelector(".carousel-track");
-
     if (!track || !container) return;
 
-    const items = Array.from(track.children);
-
+    const items = Array.from(track.querySelectorAll(".carousel-item"));
     if (!items.length) return;
 
-    // Navegación cíclica
-    if (index < 0) index = items.length - 1;
-    if (index >= items.length) index = 0;
+    // El track contiene 5 copias del portfolio.
+    const originalCount = Math.max(1, Math.floor(items.length / 5));
 
+    // Si llegamos a un extremo, saltamos al bloque central equivalente.
+    // El salto es invisible porque la imagen es la misma.
+    if (index < originalCount) index += originalCount * 2;
+    if (index >= originalCount * 4) index -= originalCount * 2;
+
+    index = ((index % items.length) + items.length) % items.length;
     currentIndex = index;
+
+    items.forEach((item, i) => item.classList.toggle("active-center", i === currentIndex));
+
     const activeItem = items[currentIndex];
+    if (!activeItem) return;
 
-    // Asignar clase .active-center al elemento activo
-    items.forEach((item, i) => {
-        if (i === currentIndex) {
-            item.classList.add("active-center");
-        } else {
-            item.classList.remove("active-center");
-        }
-    });
-
-    // Cálculo dinámico para CENTRAR la foto exacta en el contenedor
     const containerWidth = container.offsetWidth || container.clientWidth;
-    const itemWidth = activeItem.offsetWidth;
-    const itemOffsetLeft = activeItem.offsetLeft;
-
-    const targetTranslate = (containerWidth / 2) - (itemOffsetLeft + itemWidth / 2);
+    const itemCenter = activeItem.offsetLeft + activeItem.offsetWidth / 2;
+    const targetTranslate = containerWidth / 2 - itemCenter;
 
     track.style.transition = animate
         ? "transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)"
         : "none";
-
-    track.style.transform = `translateX(${targetTranslate}px)`;
+    track.style.transform = `translate3d(${targetTranslate}px, 0, 0)`;
 }
-
 
 /* ==========================================================================
    INICIALIZACIÓN

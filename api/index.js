@@ -8,11 +8,17 @@ const { put, del } = require("@vercel/blob");
 
 const app = express();
 
+const FRONTEND_URL = "https://www.krymtattoo.com";
+
 /* ============================================================
    MIDDLEWARE
 ============================================================ */
 
-app.use(cors());
+app.use(cors({
+    origin: FRONTEND_URL,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(express.json({ limit: "2mb" }));
 
@@ -43,7 +49,8 @@ app.get("/api/test", (req, res) => {
     res.json({
         ok: true,
         mensaje: "Express funciona en Vercel",
-        url: req.originalUrl
+        url: req.originalUrl,
+        frontend: FRONTEND_URL
     });
 
 });
@@ -1378,6 +1385,15 @@ app.post(
    Resend mediante API
 ============================================================ */
 
+// Comprobación rápida desde el navegador.
+// El envío real de correo se hace mediante POST desde el formulario.
+app.get("/api/citas-correo", (req, res) => {
+    res.json({
+        ok: true,
+        mensaje: "Endpoint de citas-correo disponible. Usa POST para enviar el formulario."
+    });
+});
+
 app.post(
     "/api/citas-correo",
 
@@ -1390,6 +1406,7 @@ app.post(
             const {
                 nombre,
                 email,
+                fecha,
                 idea
             } = req.body;
 
@@ -1452,6 +1469,11 @@ app.post(
                     <p>
                         <strong>Email:</strong>
                         ${email}
+                    </p>
+
+                    <p>
+                        <strong>Fecha solicitada:</strong>
+                        ${fecha || "No seleccionada"}
                     </p>
 
                     <h3>
