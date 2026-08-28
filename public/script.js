@@ -685,7 +685,76 @@ function appendFotoHtml(item) {
 }
 
 
+async function subirImagenDirectamenteABlob(file, carpeta) {
+
+    if (!file) {
+        throw new Error("Selecciona una imagen.");
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+        throw new Error("La imagen no puede superar los 10 MB.");
+    }
+
+    /*
+     * @vercel/blob/client hace que el archivo vaya directamente
+     * desde el navegador a Vercel Blob.
+     * La función /api/blob-upload solo recibe el intercambio de token.
+     */
+    const ticketResponse =
+        await adminFetch(
+            "/api/blob-upload-ticket",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: "{}"
+            }
+        );
+
+    const ticketData =
+        await ticketResponse.json().catch(() => ({}));
+
+    if (!ticketResponse.ok || !ticketData.ticket) {
+        throw new Error(
+            ticketData.error ||
+            "No se pudo autorizar la subida de la imagen."
+        );
+    }
+
+    const { upload } = await import(
+        "https://esm.sh/@vercel/blob@2.6.1/client"
+    );
+
+    const blob = await upload(
+        file.name,
+        file,
+        {
+            access: "public",
+            handleUploadUrl: "/api/blob-upload",
+            clientPayload: JSON.stringify({
+                ticket: ticketData.ticket,
+                folder: carpeta
+            }),
+            multipart: file.size > 4 * 1024 * 1024,
+            onUploadProgress: ({ percentage }) => {
+                console.log(
+                    `Subiendo ${carpeta}: ${Math.round(percentage)}%`
+                );
+            }
+        }
+    );
+
+    if (!blob || !blob.url) {
+        throw new Error("Vercel Blob no devolvió la URL de la imagen.");
+    }
+
+    return blob.url;
+}
+
+
 async function savePortfolioItem(event) {
+
     event.preventDefault();
 
     if (!isLogged || !adminToken) {
@@ -703,75 +772,64 @@ async function savePortfolioItem(event) {
     }
 
     try {
-        /*
-         * 1. Subimos la imagen directamente a Blob.
-         *    NO pasa por la función de Vercel.
-         */
-        const uploadResponse = await fetch(
-            `/api/upload-image?filename=${encodeURIComponent(file.name)}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": file.type
-                },
-                body: file
-            }
-        );
 
-        const uploadData = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-            throw new Error(
-                uploadData.error || "No se pudo subir la imagen."
+        const imagen =
+            await subirImagenDirectamenteABlob(
+                file,
+                "portfolio"
             );
-        }
 
-        /*
-         * 2. Guardamos solamente la URL en MySQL.
-         */
-        const data = {
-            imagen: uploadData.url,
-            estilo: form.querySelector('[name="estilo"]')?.value || ""
-        };
+        const estilo =
+            form.querySelector('[name="estilo"]')?.value?.trim() || "";
 
-        const response = await adminFetch(
-            "/api/guardarPortfolio",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            }
-        );
+        const response =
+            await adminFetch(
+                "/api/guardarPortfolio",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        estilo,
+                        imagen
+                    })
+                }
+            );
 
-        const result = await response.json().catch(() => ({}));
+        const contentType =
+            response.headers.get("content-type") || "";
+
+        const result =
+            contentType.includes("application/json")
+                ? await response.json()
+                : { error: await response.text() };
 
         if (!response.ok) {
             throw new Error(
-                result.error || "No se pudo guardar el portfolio."
+                result.error ||
+                "No se pudo guardar el portfolio."
             );
         }
 
         alert("Trabajo guardado correctamente.");
-
         cerrarModal("modalPortfolio");
-
         form.reset();
-
         window.location.reload();
 
     } catch (error) {
 
-        console.error("Error guardando portfolio:", error);
+        console.error(
+            "ERROR GUARDANDO PORTFOLIO:",
+            error
+        );
 
         alert(
             error.message ||
-            "No se pudo guardar el trabajo."
+            "Error al subir la imagen."
         );
     }
 }
-
 
 function cargarPortfolioDesdeBD() {
 
@@ -972,50 +1030,35 @@ async function saveOfertaItem() {
 
     try {
 
-        /*
-         * 1. Subir imagen directamente a Vercel Blob
-         */
-        const uploadResponse = await fetch(
-            `/api/upload-image?filename=${encodeURIComponent(file.name)}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": file.type
-                },
-                body: file
-            }
-        );
-
-        const uploadData =
-            await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-            throw new Error(
-                uploadData.error ||
-                "No se pudo subir la imagen."
+        const imagen =
+            await subirImagenDirectamenteABlob(
+                file,
+                "ofertas"
             );
-        }
 
-        /*
-         * 2. Guardar únicamente la URL
-         */
-        const response = await adminFetch(
-            "/api/guardarOferta",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    titulo,
-                    precio,
-                    imagen: uploadData.url
-                })
-            }
-        );
+        const response =
+            await adminFetch(
+                "/api/guardarOferta",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        titulo,
+                        precio,
+                        imagen
+                    })
+                }
+            );
+
+        const contentType =
+            response.headers.get("content-type") || "";
 
         const result =
-            await response.json().catch(() => ({}));
+            contentType.includes("application/json")
+                ? await response.json()
+                : { error: await response.text() };
 
         if (!response.ok) {
             throw new Error(
@@ -1025,29 +1068,25 @@ async function saveOfertaItem() {
         }
 
         alert("Oferta guardada correctamente.");
-
         cerrarModal("modalOfertas");
-
         document.getElementById("ofTitle").value = "";
         document.getElementById("ofPrice").value = "";
         document.getElementById("ofFile").value = "";
-
         window.location.reload();
 
     } catch (error) {
 
         console.error(
-            "Error guardando oferta:",
+            "ERROR GUARDANDO OFERTA:",
             error
         );
 
         alert(
             error.message ||
-            "No se pudo guardar la oferta."
+            "Error al guardar la oferta."
         );
     }
 }
-
 
 function cargarOfertasDesdeServidor() {
 
@@ -1450,7 +1489,14 @@ function renderizarFaqs(listaFaqs) {
             </div>
 
             <div class="faq-answer">
-                ${escaparHtml(respuesta)}
+
+                ${escaparHtml(
+                    respuesta
+                ).replace(
+                    /\n/g,
+                    "<br>"
+                )}
+
             </div>
 
             ${
