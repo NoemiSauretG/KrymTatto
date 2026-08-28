@@ -5,6 +5,7 @@ const path = require("path");
 const multer = require("multer");
 const jwt = require("jsonwebtoken");
 const { put, del } = require("@vercel/blob");
+const { handleUpload } = require("@vercel/blob/client");
 
 const app = express();
 
@@ -508,45 +509,156 @@ app.get(
 
 
 /* ============================================================
+   VERCEL BLOB - TICKET DE SUBIDA
+============================================================ */
+
+app.post(
+    "/api/blob-upload-ticket",
+    requireAdmin,
+    (req, res) => {
+        try {
+            const ticket = jwt.sign(
+                { role: "blob-upload" },
+                JWT_SECRET,
+                { expiresIn: "5m" }
+            );
+
+            return res.json({
+                ok: true,
+                ticket
+            });
+        } catch (error) {
+            return res.status(500).json({
+                ok: false,
+                error: "No se pudo crear el permiso de subida"
+            });
+        }
+    }
+);
+
+
+/* ============================================================
+   VERCEL BLOB - CLIENT UPLOAD
+   La imagen se sube directamente desde el navegador a Blob.
+   La función de Vercel solo genera el token, por lo que la
+   imagen grande NO pasa por el límite de payload de la función.
+============================================================ */
+
+app.post(
+    "/api/blob-upload",
+    async (req, res) => {
+
+        try {
+
+            const body = req.body || {};
+
+            /*
+             * En client uploads, el navegador no puede añadir nuestro
+             * Bearer al request interno que hace el SDK. Por eso usamos
+             * un ticket de 5 minutos generado por /api/blob-upload-ticket.
+             */
+
+            const jsonResponse =
+                await handleUpload({
+                    body,
+                    request: req,
+                    onBeforeGenerateToken: async (
+                        pathname,
+                        clientPayload
+                    ) => {
+
+                        let payload;
+
+                        try {
+                            payload = JSON.parse(clientPayload || "{}");
+                            jwt.verify(
+                                payload.ticket,
+                                JWT_SECRET
+                            );
+                        } catch (error) {
+                            throw new Error(
+                                "Permiso de subida no válido o caducado"
+                            );
+                        }
+
+                        const folder =
+                            payload.folder === "ofertas"
+                                ? "ofertas"
+                                : "portfolio";
+
+                        const cleanPath =
+                            pathname
+                                .replace(/^\/+/, "")
+                                .replace(/[^a-zA-Z0-9._\/-]/g, "-");
+
+                        const filename =
+                            cleanPath.split("/").pop() ||
+                            `imagen-${Date.now()}.jpg`;
+
+                        return {
+                            allowedContentTypes: [
+                                "image/jpeg",
+                                "image/png",
+                                "image/webp",
+                                "image/gif"
+                            ],
+                            maximumSizeInBytes:
+                                10 * 1024 * 1024,
+                            addRandomSuffix: true,
+                            tokenPayload: JSON.stringify({
+                                folder,
+                                filename
+                            })
+                        };
+                    },
+                    onUploadCompleted: async ({ blob }) => {
+                        console.log(
+                            "BLOB SUBIDO CORRECTAMENTE:",
+                            blob.url
+                        );
+                    }
+                });
+
+            return res.json(jsonResponse);
+
+        } catch (error) {
+
+            console.error(
+                "ERROR EN CLIENT UPLOAD BLOB:",
+                error
+            );
+
+            return res.status(400).json({
+                error:
+                    error.message ||
+                    "No se pudo gestionar la subida"
+            });
+        }
+    }
+);
+
+
+/* ============================================================
    GUARDAR PORTFOLIO
 ============================================================ */
 
 app.post(
     "/api/guardarPortfolio",
     requireAdmin,
-    upload.single("imagen"),
     async (req, res) => {
 
         try {
 
-            console.log("GUARDAR PORTFOLIO");
-            console.log("BODY:", req.body);
-            console.log("FILE:", !!req.file);
+            const { estilo, imagen } = req.body || {};
 
-
-            const { estilo } = req.body;
-
-
-            if (!req.file) {
-
+            if (!imagen || typeof imagen !== "string") {
                 return res.status(400).json({
-                    error: "Falta la imagen"
+                    error: "Falta la URL de la imagen"
                 });
             }
 
-
-            const imagen =
-                await saveBlob(
-                    req.file,
-                    "portfolio"
-                );
-
-
             const posicion =
-                await nextPosition(
-                    "portfolio"
-                );
-
+                await nextPosition("portfolio");
 
             const [result] =
                 await db.query(
@@ -554,20 +666,18 @@ app.post(
                     (estilo, imagen, posicion)
                     VALUES (?, ?, ?)`,
                     [
-                        estilo,
+                        estilo || "",
                         imagen,
                         posicion
                     ]
                 );
 
-
-            res.json({
+            return res.json({
                 success: true,
                 id: result.insertId,
                 imagen,
                 posicion
             });
-
 
         } catch (error) {
 
@@ -576,26 +686,15 @@ app.post(
                 error
             );
 
-
-            res.status(500).json({
-
-                error:
-                    "Error guardando portfolio",
-
-                detalle:
-                    error.message,
-
-                code:
-                    error.code || null,
-
-                sqlMessage:
-                    error.sqlMessage || null
-
+            return res.status(500).json({
+                error: "Error guardando portfolio",
+                detalle: error.message,
+                code: error.code || null,
+                sqlMessage: error.sqlMessage || null
             });
         }
     }
 );
-
 
 /* ============================================================
    GUARDAR OFERTA
@@ -604,56 +703,21 @@ app.post(
 app.post(
     "/api/guardarOferta",
     requireAdmin,
-    upload.single("imagen"),
     async (req, res) => {
 
         try {
 
-            console.log("GUARDAR OFERTA");
-            console.log("BODY:", req.body);
-            console.log("FILE:", !!req.file);
+            const { titulo, precio, imagen } =
+                req.body || {};
 
-
-            const {
-                titulo,
-                precio
-            } = req.body;
-
-
-            if (!titulo || !precio) {
-
+            if (!titulo || !precio || !imagen) {
                 return res.status(400).json({
-
-                    error:
-                        "Faltan título o precio"
-
+                    error: "Faltan título, precio o URL de imagen"
                 });
             }
-
-
-            if (!req.file) {
-
-                return res.status(400).json({
-
-                    error:
-                        "Falta la imagen"
-
-                });
-            }
-
-
-            const imagen =
-                await saveBlob(
-                    req.file,
-                    "ofertas"
-                );
-
 
             const posicion =
-                await nextPosition(
-                    "ofertas"
-                );
-
+                await nextPosition("ofertas");
 
             const [result] =
                 await db.query(
@@ -668,20 +732,12 @@ app.post(
                     ]
                 );
 
-
-            res.json({
-
+            return res.json({
                 success: true,
-
-                id:
-                    result.insertId,
-
+                id: result.insertId,
                 imagen,
-
                 posicion
-
             });
-
 
         } catch (error) {
 
@@ -690,26 +746,15 @@ app.post(
                 error
             );
 
-
-            res.status(500).json({
-
-                error:
-                    "Error guardando oferta",
-
-                detalle:
-                    error.message,
-
-                code:
-                    error.code || null,
-
-                sqlMessage:
-                    error.sqlMessage || null
-
+            return res.status(500).json({
+                error: "Error guardando oferta",
+                detalle: error.message,
+                code: error.code || null,
+                sqlMessage: error.sqlMessage || null
             });
         }
     }
 );
-
 
 /* ============================================================
    GUARDAR FAQ

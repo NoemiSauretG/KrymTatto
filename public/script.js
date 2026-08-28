@@ -685,69 +685,91 @@ function appendFotoHtml(item) {
 }
 
 
-function savePortfolioItem(event) {
-
+async function savePortfolioItem(event) {
     event.preventDefault();
 
-
     if (!isLogged || !adminToken) {
-
-        alert(
-            "Debes iniciar sesión como administrador."
-        );
-
+        alert("Debes iniciar sesión como administrador.");
         return;
     }
 
+    const form = event.target;
+    const fileInput = form.querySelector('input[type="file"]');
+    const file = fileInput?.files?.[0];
 
-    const formData =
-        new FormData(
-            event.target
+    if (!file) {
+        alert("Selecciona una imagen.");
+        return;
+    }
+
+    try {
+        /*
+         * 1. Subimos la imagen directamente a Blob.
+         *    NO pasa por la función de Vercel.
+         */
+        const uploadResponse = await fetch(
+            `/api/upload-image?filename=${encodeURIComponent(file.name)}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": file.type
+                },
+                body: file
+            }
         );
 
+        const uploadData = await uploadResponse.json();
 
-    adminFetch(
-        "/api/guardarPortfolio",
-        {
-            method: "POST",
-            body: formData
+        if (!uploadResponse.ok) {
+            throw new Error(
+                uploadData.error || "No se pudo subir la imagen."
+            );
         }
-    )
-        .then(async response => {
 
-            const text =
-                await response.text();
+        /*
+         * 2. Guardamos solamente la URL en MySQL.
+         */
+        const data = {
+            imagen: uploadData.url,
+            estilo: form.querySelector('[name="estilo"]')?.value || ""
+        };
 
-            if (!response.ok) {
-                throw new Error(
-                    text ||
-                    "Error al subir la imagen."
-                );
+        const response = await adminFetch(
+            "/api/guardarPortfolio",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
             }
+        );
 
-            return text;
-        })
-        .then(message => {
+        const result = await response.json().catch(() => ({}));
 
-            alert(message);
-
-            cerrarModal(
-                "modalPortfolio"
+        if (!response.ok) {
+            throw new Error(
+                result.error || "No se pudo guardar el portfolio."
             );
+        }
 
-            event.target.reset();
+        alert("Trabajo guardado correctamente.");
 
-            window.location.reload();
-        })
-        .catch(error => {
+        cerrarModal("modalPortfolio");
 
-            console.error(error);
+        form.reset();
 
-            alert(
-                error.message ||
-                "Error al subir la imagen."
-            );
-        });
+        window.location.reload();
+
+    } catch (error) {
+
+        console.error("Error guardando portfolio:", error);
+
+        alert(
+            error.message ||
+            "No se pudo guardar el trabajo."
+        );
+    }
 }
 
 
@@ -927,106 +949,103 @@ function filtrarEstilo(
    OFERTAS
 ========================================================================== */
 
-function saveOfertaItem() {
+async function saveOfertaItem() {
 
     if (!isLogged || !adminToken) {
-
-        alert(
-            "Debes iniciar sesión como administrador."
-        );
-
+        alert("Debes iniciar sesión como administrador.");
         return;
     }
-
 
     const titulo =
-        document.getElementById(
-            "ofTitle"
-        ).value;
-
+        document.getElementById("ofTitle").value.trim();
 
     const precio =
-        document.getElementById(
-            "ofPrice"
-        ).value;
-
+        document.getElementById("ofPrice").value.trim();
 
     const file =
-        document.getElementById(
-            "ofFile"
-        ).files[0];
-
+        document.getElementById("ofFile").files[0];
 
     if (!titulo || !precio || !file) {
-
-        alert(
-            "Completa todos los campos."
-        );
-
+        alert("Completa todos los campos.");
         return;
     }
 
+    try {
 
-    const formData =
-        new FormData();
-
-
-    formData.append(
-        "titulo",
-        titulo
-    );
-
-    formData.append(
-        "precio",
-        precio
-    );
-
-    formData.append(
-        "imagen",
-        file
-    );
-
-
-    adminFetch(
-        "/api/guardarOferta",
-        {
-            method: "POST",
-            body: formData
-        }
-    )
-        .then(async response => {
-
-            const text =
-                await response.text();
-
-            if (!response.ok) {
-                throw new Error(
-                    text ||
-                    "Error al guardar la oferta."
-                );
+        /*
+         * 1. Subir imagen directamente a Vercel Blob
+         */
+        const uploadResponse = await fetch(
+            `/api/upload-image?filename=${encodeURIComponent(file.name)}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": file.type
+                },
+                body: file
             }
+        );
 
-            return text;
-        })
-        .then(message => {
+        const uploadData =
+            await uploadResponse.json();
 
-            alert(message);
-
-            cerrarModal(
-                "modalOfertas"
+        if (!uploadResponse.ok) {
+            throw new Error(
+                uploadData.error ||
+                "No se pudo subir la imagen."
             );
+        }
 
-            window.location.reload();
-        })
-        .catch(error => {
+        /*
+         * 2. Guardar únicamente la URL
+         */
+        const response = await adminFetch(
+            "/api/guardarOferta",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    titulo,
+                    precio,
+                    imagen: uploadData.url
+                })
+            }
+        );
 
-            console.error(error);
+        const result =
+            await response.json().catch(() => ({}));
 
-            alert(
-                error.message ||
-                "Error al guardar la oferta."
+        if (!response.ok) {
+            throw new Error(
+                result.error ||
+                "No se pudo guardar la oferta."
             );
-        });
+        }
+
+        alert("Oferta guardada correctamente.");
+
+        cerrarModal("modalOfertas");
+
+        document.getElementById("ofTitle").value = "";
+        document.getElementById("ofPrice").value = "";
+        document.getElementById("ofFile").value = "";
+
+        window.location.reload();
+
+    } catch (error) {
+
+        console.error(
+            "Error guardando oferta:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "No se pudo guardar la oferta."
+        );
+    }
 }
 
 
