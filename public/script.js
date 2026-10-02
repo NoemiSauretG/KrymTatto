@@ -752,6 +752,85 @@ async function subirImagenDirectamenteABlob(file, carpeta) {
     return blob.url;
 }
 
+async function comprimirImagen(file, maxSize = 1600, quality = 0.80) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = event => {
+            img.src = event.target.result;
+        };
+
+        reader.onerror = () => {
+            reject(new Error("No se pudo leer la imagen."));
+        };
+
+        img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            // Reducir manteniendo proporción
+            if (width > maxSize || height > maxSize) {
+                if (width >= height) {
+                    height = Math.round((height * maxSize) / width);
+                    width = maxSize;
+                } else {
+                    width = Math.round((width * maxSize) / height);
+                    height = maxSize;
+                }
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext("2d");
+
+            if (!ctx) {
+                reject(new Error("No se pudo procesar la imagen."));
+                return;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob(
+                blob => {
+                    if (!blob) {
+                        reject(new Error("No se pudo comprimir la imagen."));
+                        return;
+                    }
+
+                    const nombre = file.name
+                        .replace(/\.[^/.]+$/, "")
+                        .replace(/[^a-zA-Z0-9_-]/g, "_");
+
+                    const compressedFile = new File(
+                        [blob],
+                        `${nombre}.webp`,
+                        {
+                            type: "image/webp",
+                            lastModified: Date.now()
+                        }
+                    );
+
+                    console.log(
+                        `Imagen comprimida: ${(file.size / 1024 / 1024).toFixed(2)} MB → ${(compressedFile.size / 1024).toFixed(0)} KB`
+                    );
+
+                    resolve(compressedFile);
+                },
+                "image/webp",
+                quality
+            );
+        };
+
+        img.onerror = () => {
+            reject(new Error("El archivo no es una imagen válida."));
+        };
+
+        reader.readAsDataURL(file);
+    });
+}
 
 async function savePortfolioItem(event) {
 
@@ -764,20 +843,20 @@ async function savePortfolioItem(event) {
 
     const form = event.target;
     const fileInput = form.querySelector('input[type="file"]');
-    const file = fileInput?.files?.[0];
+const file = fileInput.files[0];
 
-    if (!file) {
-        alert("Selecciona una imagen.");
-        return;
-    }
+if (!file) {
+    alert("Selecciona una imagen.");
+    return;
+}
 
-    try {
+try {
+        const compressedFile = await comprimirImagen(file, 1600, 0.80);
 
-        const imagen =
-            await subirImagenDirectamenteABlob(
-                file,
-                "portfolio"
-            );
+        const imagen = await subirImagenDirectamenteABlob(
+            compressedFile,
+            "portfolio"
+        );
 
         const estilo =
             form.querySelector('[name="estilo"]')?.value?.trim() || "";
@@ -1020,8 +1099,8 @@ async function saveOfertaItem() {
     const precio =
         document.getElementById("ofPrice").value.trim();
 
-    const file =
-        document.getElementById("ofFile").files[0];
+    const fileInput = document.getElementById("ofFile");
+    const file = fileInput.files[0];
 
     if (!titulo || !precio || !file) {
         alert("Completa todos los campos.");
@@ -1030,11 +1109,12 @@ async function saveOfertaItem() {
 
     try {
 
-        const imagen =
-            await subirImagenDirectamenteABlob(
-                file,
-                "ofertas"
-            );
+        const compressedFile = await comprimirImagen(file, 1600, 0.80);
+
+        const imagen = await subirImagenDirectamenteABlob(
+            compressedFile,
+            "ofertas"
+        );
 
         const response =
             await adminFetch(
@@ -2343,6 +2423,8 @@ function moveToSlide(index, animate = true) {
         : "none";
     track.style.transform = `translate3d(${targetTranslate}px, 0, 0)`;
 }
+
+
 
 /* ==========================================================================
    INICIALIZACIÓN
