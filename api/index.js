@@ -222,12 +222,16 @@ function requireAdmin(req, res, next) {
 
     try {
 
-        req.admin =
-            jwt.verify(
-                token,
-                JWT_SECRET
-            );
+        const payload = jwt.verify(token, JWT_SECRET);
 
+        // Un ticket de subida no debe servir como sesión de administrador.
+        if (payload.role !== "admin") {
+            return res.status(403).json({
+                error: "Permisos insuficientes"
+            });
+        }
+
+        req.admin = payload;
         next();
 
     } catch (error) {
@@ -603,10 +607,14 @@ app.post(
 
                         try {
                             payload = JSON.parse(clientPayload || "{}");
-                            jwt.verify(
+                            const ticketClaims = jwt.verify(
                                 payload.ticket,
                                 JWT_SECRET
                             );
+
+                            if (ticketClaims.role !== "blob-upload") {
+                                throw new Error("Tipo de ticket no válido");
+                            }
                         } catch (error) {
                             throw new Error(
                                 "Permiso de subida no válido o caducado"
@@ -1249,12 +1257,10 @@ async function guardarOrden(
     }
 
 
-    const connection =
-        await db.getConnection();
-
+    let connection;
 
     try {
-
+        connection = await db.getConnection();
         await connection.beginTransaction();
 
 
@@ -1289,7 +1295,13 @@ async function guardarOrden(
 
     } catch (error) {
 
-        await connection.rollback();
+        if (connection) {
+            try {
+                await connection.rollback();
+            } catch (rollbackError) {
+                console.error("ERROR EN ROLLBACK:", rollbackError);
+            }
+        }
 
         console.error(
             "ERROR REORDENANDO:",
@@ -1305,8 +1317,7 @@ async function guardarOrden(
         });
 
     } finally {
-
-        connection.release();
+        if (connection) connection.release();
     }
 }
 
