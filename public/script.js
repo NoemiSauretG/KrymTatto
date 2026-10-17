@@ -1841,8 +1841,10 @@ function saveFaqItem() {
    CALENDARIO
 ========================================================================== */
 
-let currentYear = 2026;
-let currentMonth = 6;
+// El calendario empieza siempre en el mes y año actuales.
+const fechaActualCalendario = new Date();
+let currentYear = fechaActualCalendario.getFullYear();
+let currentMonth = fechaActualCalendario.getMonth();
 
 let festivos = [];
 
