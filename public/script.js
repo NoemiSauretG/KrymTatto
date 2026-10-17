@@ -1,4 +1,40 @@
 /* ==========================================================================
+   Reintento peticiones fetch a Vercel en caso de error temporal (500, 429)
+========================================================================== */
+async function fetchVercel(url, options = {}, maxIntentos = 3) {
+    let ultimoError;
+
+    for (let intento = 1; intento <= maxIntentos; intento++) {
+        try {
+            const response = await fetch(url, options);
+
+            // Solo reintentar errores temporales del servidor
+            if (response.status >= 500 || response.status === 429) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return response;
+
+        } catch (error) {
+            ultimoError = error;
+
+            console.warn(
+                `Error en ${url}. Intento ${intento}/${maxIntentos}`,
+                error
+            );
+
+            if (intento < maxIntentos) {
+                await new Promise(resolve =>
+                    setTimeout(resolve, intento * 1000)
+                );
+            }
+        }
+    }
+
+    throw ultimoError;
+}
+
+/* ==========================================================================
    ESTADO GLOBAL Y AUTENTICACIÓN
 ========================================================================== */
 
@@ -926,7 +962,7 @@ function cargarPortfolioDesdeBD() {
     if (!grid) return;
 
 
-    fetch("/api/portfolio")
+    fetchVercel("/api/portfolio")
         .then(response => {
 
             if (!response.ok) {
@@ -1179,7 +1215,7 @@ function cargarOfertasDesdeServidor() {
     if (!container) return;
 
 
-    fetch("/api/ofertas")
+    fetchVercel("/api/ofertas")
         .then(response => {
 
             if (!response.ok) {
@@ -2282,7 +2318,7 @@ function cargarCarruselDestacados() {
 
     if (!track) return;
 
-    fetch("/api/portfolio")
+    fetchVercel("/api/portfolio")
         .then(response => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
