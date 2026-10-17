@@ -1478,13 +1478,12 @@ async function cargarFaqsDesdeServidor() {
     try {
 
         const response =
-            await fetch(
+            await fetchVercel(
                 "/api/faq",
                 {
                     method: "GET",
                     headers: {
-                        Accept:
-                            "application/json"
+                        Accept: "application/json"
                     }
                 }
             );
