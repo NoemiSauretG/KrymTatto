@@ -83,6 +83,38 @@ const db = mysql.createPool({
     keepAliveInitialDelay: 10000
 });
 
+function esperar(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Reintento de consultas MySQL en caso de error de conexión temporal
+async function queryConReintento(sql, params = [], maxIntentos = 2) {
+    for (let intento = 1; intento <= maxIntentos; intento++) {
+        try {
+            return await db.query(sql, params);
+        } catch (error) {
+            const erroresConexion = [
+                "PROTOCOL_CONNECTION_LOST",
+                "ECONNRESET",
+                "ETIMEDOUT",
+                "EPIPE",
+                "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR"
+            ];
+
+            const esErrorConexion = erroresConexion.includes(error.code);
+
+            if (!esErrorConexion || intento === maxIntentos) {
+                throw error;
+            }
+
+            console.warn(
+                `Conexión MySQL perdida. Reintentando consulta (${intento}/${maxIntentos})`
+            );
+
+            await esperar(300);
+        }
+    }
+}
 
 /* ============================================================
    TEST MYSQL
@@ -92,7 +124,7 @@ app.get("/api/test-db", async (req, res) => {
 
     try {
 
-        const [rows] = await db.query(
+        const [rows] = await queryConReintento(
             "SELECT 1 AS conectado"
         );
 
@@ -314,7 +346,7 @@ async function nextPosition(table) {
 
 
     const [rows] =
-        await db.query(
+        await queryConReintento(
             `SELECT COALESCE(MAX(posicion), -1) + 1 AS siguiente
              FROM ${table}`
         );
@@ -402,7 +434,7 @@ app.get(
         try {
 
             const [rows] =
-                await db.query(
+                await queryConReintento(
                     `SELECT *
                      FROM portfolio
                      ORDER BY posicion ASC, id ASC`
@@ -441,7 +473,7 @@ app.get(
         try {
 
             const [rows] =
-                await db.query(
+                await queryConReintento(
                     `SELECT *
                      FROM ofertas
                      ORDER BY posicion ASC, id ASC`
@@ -480,7 +512,7 @@ app.get(
         try {
 
             const [rows] =
-                await db.query(
+                await queryConReintento(
                     `SELECT *
                      FROM faq
                      ORDER BY posicion ASC, id ASC`
@@ -881,7 +913,7 @@ app.delete(
 
 
             const [rows] =
-                await db.query(
+                await queryConReintento(
                     "SELECT imagen FROM portfolio WHERE id = ?",
                     [id]
                 );
@@ -986,7 +1018,7 @@ app.delete(
 
 
             const [rows] =
-                await db.query(
+                await queryConReintento(
                     "SELECT imagen FROM ofertas WHERE id = ?",
                     [id]
                 );
